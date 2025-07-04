@@ -18,8 +18,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "dyson:spells": "ts-node -r tsconfig-paths/register src/script/runner.ts --resource=spells",
-    "dyson:monsters": "ts-node -r tsconfig-paths/register src/script/runner.ts --resource=monsters"
+    "dyson:spells": "ts-node -r tsconfig-paths/register src/script/runner.ts --resource=spells --mode=dyson",
+    "dyson:monsters": "ts-node -r tsconfig-paths/register src/script/runner.ts --resource=monsters --mode=dyson",
+    "converter:spells": "ts-node -r tsconfig-paths/register src/script/runner.ts --resource=spells --mode=converter"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -29,9 +30,9 @@
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.0.1",
     "@types/mongoose": "^5.11.96",
+    "axios": "^1.10.0",
     "class-validator": "^0.14.2",
     "mongoose": "^8.16.1",
-    "axios": "^1.10.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

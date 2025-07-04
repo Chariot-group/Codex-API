@@ -1,7 +1,8 @@
-import { NestFactory } from '@nestjs/core';
-import { Logger } from '@nestjs/common';
-import { AppModule } from '@/app.module';
-import { DysonService } from '@/script/dyson/dyson.service';
+import { NestFactory } from "@nestjs/core";
+import { Logger } from "@nestjs/common";
+import { AppModule } from "@/app.module";
+import { DysonService } from "@/script/dyson/dyson.service";
+import { ConverterService } from "@/script/converter/converter.service"; // Import du converter
 
 const getArgs = (args: string[]) =>
   process.argv.reduce((args, arg) => {
@@ -23,27 +24,37 @@ const getArgs = (args: string[]) =>
   }, {});
 
 async function bootstrap() {
-  const SERVICE_NAME: string = 'Dyson';
+  const SERVICE_NAME = "Runner";
 
-  const start: number = Date.now();
-  Logger.log('Creating an application context...', SERVICE_NAME);
-
+  Logger.log("Creating application context...", SERVICE_NAME);
   const app = await NestFactory.createApplicationContext(AppModule);
-
-  Logger.log('Application context created', SERVICE_NAME);
+  Logger.log("Application context created", SERVICE_NAME);
 
   const args = getArgs(process.argv.slice(2));
-  if(args['resource'] === undefined) {
-    Logger.error('No resource specified. Use --resource=<resource_name>', SERVICE_NAME);
+
+  const resource = args["resource"];
+  if (!resource) {
+    Logger.error("No resource specified. Use --resource=<resource_name>", SERVICE_NAME);
     process.exit(1);
   }
 
-  const dysonService = app.get(DysonService);
-  await dysonService.launch(args['resource']);
+  // Par défaut on lance Dyson, mais on peut spécifier --mode=converter
+  const mode = args["mode"] || "dyson";
 
-  const end: number = Date.now();
-  Logger.log(`JSON ready (${end - start}ms)`, SERVICE_NAME);
+  if (mode === "dyson") {
+    const dysonService = app.get(DysonService);
+    Logger.log(`Starting Dyson service for resource "${resource}"...`, SERVICE_NAME);
+    await dysonService.launch(resource);
+  } else if (mode === "converter") {
+    const converterService = app.get(ConverterService);
+    Logger.log(`Starting Converter service for resource "${resource}"...`, SERVICE_NAME);
+    await converterService.launch(resource);
+  } else {
+    Logger.error(`Unknown mode "${mode}". Supported modes: dyson, converter`, SERVICE_NAME);
+    process.exit(1);
+  }
 
+  Logger.log(`Process for mode "${mode}" completed`, SERVICE_NAME);
   await app.close();
 }
 
