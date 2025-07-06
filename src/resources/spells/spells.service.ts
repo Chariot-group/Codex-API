@@ -60,7 +60,7 @@ export class SpellsService {
     }
   }
 
-  async findOne(id: Types.ObjectId) {
+  async findOneById(id: Types.ObjectId) {
     try {
       const start: number = Date.now();
       const spell = await this.spellModel
@@ -75,6 +75,25 @@ export class SpellsService {
       };
     } catch (error) {
       const message = `Error while fetching spell #${id}: ${error.message}`;
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  async findOneByLabel(label: string) {
+    try {
+      const start: number = Date.now();
+      const spell = await this.spellModel
+        .findOne({ name: label })
+        .exec();
+      const end: number = Date.now();
+
+      const message = `Spell ${label} found in ${end - start}ms`;
+      return {
+        message,
+        data: spell,
+      };
+    } catch (error) {
+      const message = `Error while fetching spell ${label}: ${error.message}`;
       throw new InternalServerErrorException(message);
     }
   }

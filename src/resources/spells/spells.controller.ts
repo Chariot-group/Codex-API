@@ -43,8 +43,11 @@ export class SpellsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseMongoIdPipe) id: Types.ObjectId) {
-
-    return this.spellsService.findOne(id);
+  async findOneById(@Param('id') id: string) {
+    if (Types.ObjectId.isValid(id)) {
+      let parseId: Types.ObjectId = new Types.ObjectId(id);
+      return this.spellsService.findOneById(parseId);
+    }
+    return this.spellsService.findOneByLabel(id);
   }
 }
