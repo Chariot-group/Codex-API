@@ -3,7 +3,7 @@ import { SpellsService } from "@/resources/spells/spells.service";
 import { ParseNullableIntPipe } from "@/common/pipes/parse-nullable-int.pipe";
 import { Model, Types } from "mongoose";
 import { InjectModel } from "@nestjs/mongoose";
-import { Spell } from "./schemas/spell.schema";
+import { Spell } from "@/resources/spells/schemas/spell.schema";
 import { ParseMongoIdPipe } from "@/common/pipes/parse-mong-id.pipe";
 
 @Controller("spells")
