@@ -83,7 +83,7 @@ export class SpellsService {
     try {
       const start: number = Date.now();
       const spell = await this.spellModel
-        .findOne({ name: label })
+        .findOne({ name: { $regex: `${decodeURIComponent(label)}`, $options: 'i' } })
         .exec();
       const end: number = Date.now();
 

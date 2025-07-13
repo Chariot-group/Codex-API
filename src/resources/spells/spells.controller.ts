@@ -27,7 +27,7 @@ export class SpellsController {
   }
 
   private async validateResourceByLabel(label: string): Promise<void> {
-    const spell = await this.spellModel.findOne({ name: label }).exec();
+    const spell = await this.spellModel.findOne({ name: { $regex: `${decodeURIComponent(label)}`, $options: 'i' } }).exec();
 
     if (!spell) {
       const message = `Spell ${label} not found`;
