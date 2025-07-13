@@ -26,11 +26,11 @@ export class SpellsController {
     }
   }
 
-  private async validateResourceByLabel(label: string): Promise<void> {
-    const spell = await this.spellModel.findOne({ name: { $regex: `${decodeURIComponent(label)}`, $options: 'i' } }).exec();
+  private async validateResourceByName(name: string): Promise<void> {
+    const spell = await this.spellModel.findOne({ name: { $regex: `${decodeURIComponent(name)}`, $options: 'i' } }).exec();
 
     if (!spell) {
-      const message = `Spell ${label} not found`;
+      const message = `Spell ${name} not found`;
       throw new NotFoundException(message);
     }
   }
@@ -58,10 +58,10 @@ export class SpellsController {
     return this.spellsService.findOneById(id);
   }
 
-  @Get('/label/:label')
-  async findOneByLabel(@Param('label') label: string) {
-    await this.validateResourceByLabel(label);
+  @Get('/name/:name')
+  async findOneByName(@Param('name') name: string) {
+    await this.validateResourceByName(name);
     
-    return this.spellsService.findOneByLabel(label);
+    return this.spellsService.findOneByName(name);
   }
 }

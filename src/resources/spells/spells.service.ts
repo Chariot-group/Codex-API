@@ -79,21 +79,21 @@ export class SpellsService {
     }
   }
 
-  async findOneByLabel(label: string) {
+  async findOneByName(name: string) {
     try {
       const start: number = Date.now();
       const spell = await this.spellModel
-        .findOne({ name: { $regex: `${decodeURIComponent(label)}`, $options: 'i' } })
+        .findOne({ name: { $regex: `${decodeURIComponent(name)}`, $options: 'i' } })
         .exec();
       const end: number = Date.now();
 
-      const message = `Spell ${label} found in ${end - start}ms`;
+      const message = `Spell ${name} found in ${end - start}ms`;
       return {
         message,
         data: spell,
       };
     } catch (error) {
-      const message = `Error while fetching spell ${label}: ${error.message}`;
+      const message = `Error while fetching spell ${name}: ${error.message}`;
       throw new InternalServerErrorException(message);
     }
   }
