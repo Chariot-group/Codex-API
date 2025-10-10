@@ -1,0 +1,13 @@
+name: PR to integ branch only from develop
+
+on:
+  pull_request:
+    branches:
+      - integ
+
+jobs:
+  call-blocker:
+    uses: ./.github/workflows/block-non-authorized-branches.yml
+    with:
+      source_branch: develop
+      target_branch: integ

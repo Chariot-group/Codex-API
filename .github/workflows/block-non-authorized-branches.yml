@@ -1,0 +1,30 @@
+# This GitHub Actions workflow is a template designed to block pull requests (PRs) that originate from unauthorized source branches.
+# It is intended to be used with `workflow_call` so it can be reused across multiple repositories or workflows.
+# 
+# Inputs:
+#   - source_branch: The only branch allowed to create PRs to the target branch.
+#   - target_branch: The branch that should only accept PRs from the specified source branch.
+#
+# The workflow will fail if a PR is opened to the target branch from any branch other than the authorized source branch.
+# This helps enforce branch protection policies and maintain a controlled development workflow.
+name: Block unauthorized PR sources
+
+on:
+  workflow_call:
+    inputs:
+      source_branch:
+        required: true
+        type: string
+      target_branch:
+        required: true
+        type: string
+
+jobs:
+  check_branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if source branch is not authorized
+        if: github.event.pull_request.base.ref == inputs.target_branch && github.event.pull_request.head.ref != inputs.source_branch
+        run: |
+          echo "❌ PR vers '${{ inputs.target_branch }}' uniquement autorisée depuis '${{ inputs.source_branch }}'."
+          exit 1

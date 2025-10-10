@@ -1,0 +1,50 @@
+name: CI - Frontend & Backend
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        project: [frontend, backend]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js for ${{ matrix.project }}
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.project }}/package-lock.json
+
+      - name: Install dependencies for ${{ matrix.project }}
+        working-directory: ./${{ matrix.project }}
+        run: |
+          if [[ "$GITHUB_REF_NAME" == "main" || "$GITHUB_REF_NAME" == "integ" ]]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Format check for ${{ matrix.project }}
+        working-directory: ./${{ matrix.project }}
+        run: npm run format
+
+      - name: Run unit tests for ${{ matrix.project }}
+        working-directory: ./${{ matrix.project }}
+        if: matrix.project == 'backend'
+        run: npm test
+
+      - name: Build ${{ matrix.project }}
+        working-directory: ./${{ matrix.project }}
+        run: npm run build

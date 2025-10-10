@@ -1,0 +1,13 @@
+name: PR to main branch only from integ
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  call-blocker:
+    uses: ./.github/workflows/block-non-authorized-branches.yml
+    with:
+      source_branch: integ
+      target_branch: main
