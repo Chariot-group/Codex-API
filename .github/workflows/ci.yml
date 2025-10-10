@@ -28,11 +28,9 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: ${{ matrix.project }}/package-lock.json
-          package-manager-cache: true
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies for ${{ matrix.project }}
-        working-directory: ./${{ matrix.project }}
         run: |
           if [[ "$GITHUB_REF_NAME" == "main" || "$GITHUB_REF_NAME" == "integ" ]]; then
             npm ci
@@ -41,9 +39,7 @@ jobs:
           fi
 
       - name: Format check for ${{ matrix.project }}
-        working-directory: ./${{ matrix.project }}
         run: npm run format
 
       - name: Build ${{ matrix.project }}
-        working-directory: ./${{ matrix.project }}
         run: npm run build
