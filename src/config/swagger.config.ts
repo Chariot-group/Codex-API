@@ -4,7 +4,7 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 export const swaggerConfig = new DocumentBuilder()
   .setTitle("Codex API")
   .setDescription("Codex API Documentation")
-  .setVersion("1.0")
+  .setVersion(process.env.API_VERSION || "unknown")
   .addBearerAuth()
   .build();
 
