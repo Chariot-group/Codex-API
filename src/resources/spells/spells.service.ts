@@ -3,7 +3,8 @@ import { Spell } from "@/resources/spells/schemas/spell.schema";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { IResponse, IPaginatedResponse } from "@/common/dtos/reponse.dto";
-import { PaginationSpell } from "@/resources/spells/dto/find-all.dto";
+import { PaginationSpell } from "@/resources/spells/dtos/find-all.dto";
+import { DtoMapper } from "@/common/mappers/common.mapper";
 
 @Injectable()
 export class SpellsService {
@@ -11,6 +12,7 @@ export class SpellsService {
 
   private readonly SERVICE_NAME = SpellsService.name;
   private readonly logger = new Logger(this.SERVICE_NAME);
+  private readonly mapper = new DtoMapper<Spell>();
 
   async findAll(paginationSpell: PaginationSpell) : Promise<IPaginatedResponse<Spell[]>> {
     try {
@@ -104,7 +106,7 @@ export class SpellsService {
 
       return {
         message: `Spells found in ${end - start}ms`,
-        data: spells,
+        data: this.mapper.transforms(spells),
         pagination: {
           page,
           offset,
@@ -142,9 +144,10 @@ export class SpellsService {
 
       const message: string = `Spell #${id} found in ${end - start}ms`;
       this.logger.log(message);
+
       return {
         message,
-        data: spell,
+        data: this.mapper.transform(spell),
       };
 
     } catch (error) {

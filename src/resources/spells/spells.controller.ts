@@ -4,8 +4,8 @@ import { Types } from "mongoose";
 import { Spell } from "@/resources/spells/schemas/spell.schema";
 import { ParseMongoIdPipe } from "@/common/pipes/parse-mong-id.pipe";
 import { IResponse } from "@/common/dtos/reponse.dto";
-import { PaginationSpell } from "@/resources/spells/dto/find-all.dto";
-import { langParam } from "./dto/find-one.dto";
+import { PaginationSpell } from "@/resources/spells/dtos/find-all.dto";
+import { langParam } from "./dtos/find-one.dto";
 
 @Controller("spells")
 export class SpellsController {
