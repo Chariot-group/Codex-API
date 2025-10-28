@@ -1,0 +1,324 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/spells": {
+      "get": {
+        "operationId": "SpellsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Number of items to return",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Sort field (prefix with '-' for descending order)",
+            "schema": {
+              "example": "-createdAt",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Spells found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IPaginatedResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Spell"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a collection of paginated spells",
+        "tags": [
+          "Spells"
+        ]
+      }
+    },
+    "/spells/{id}": {
+      "get": {
+        "operationId": "SpellsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the spell to retrieve",
+            "schema": {
+              "example": "507f1f77bcf86cd799439011",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Spell #ID found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Spell"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error while fetching spell #ID: Id is not a valid mongoose id"
+          },
+          "404": {
+            "description": "Spell #ID not found"
+          }
+        },
+        "summary": "Get a spell by ID",
+        "tags": [
+          "Spells"
+        ]
+      }
+    },
+    "/monsters": {
+      "get": {
+        "operationId": "MonstersController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Monsters"
+        ]
+      }
+    },
+    "/monsters/{id}": {
+      "get": {
+        "operationId": "MonstersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Monsters"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Codex API",
+    "description": "Codex API Documentation",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "Spell": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Fireball"
+          },
+          "level": {
+            "type": "number",
+            "example": 3
+          },
+          "school": {
+            "type": "string",
+            "example": "Evocation"
+          },
+          "description": {
+            "type": "string",
+            "example": "A bright streak flares from your pointing finger..."
+          },
+          "components": {
+            "example": [
+              "V",
+              "S",
+              "M"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "castingTime": {
+            "type": "string",
+            "example": "1 action"
+          },
+          "duration": {
+            "type": "string",
+            "example": "Instantaneous"
+          },
+          "range": {
+            "type": "string",
+            "example": "150 feet"
+          },
+          "effectType": {
+            "type": "string",
+            "example": "DAMAGE"
+          },
+          "damage": {
+            "type": "string",
+            "example": "8d6"
+          },
+          "healing": {
+            "type": "string",
+            "example": null
+          }
+        },
+        "required": [
+          "name",
+          "level",
+          "school",
+          "description",
+          "components",
+          "castingTime",
+          "duration",
+          "range",
+          "effectType",
+          "damage",
+          "healing"
+        ]
+      },
+      "IResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Spell #507f1f77bcf86cd799439011 found in 5ms"
+          },
+          "data": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "message",
+          "data"
+        ]
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "offset": {
+            "type": "number",
+            "example": 10
+          },
+          "totalItems": {
+            "type": "number",
+            "example": 100
+          }
+        },
+        "required": [
+          "page",
+          "offset",
+          "totalItems"
+        ]
+      },
+      "IPaginatedResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Spell #507f1f77bcf86cd799439011 found in 5ms"
+          },
+          "data": {
+            "type": "object"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        },
+        "required": [
+          "message",
+          "data",
+          "pagination"
+        ]
+      }
+    }
+  }
+}
