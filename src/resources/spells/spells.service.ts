@@ -3,7 +3,7 @@ import { Spell } from "@/resources/spells/schemas/spell.schema";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { IResponse, IPaginatedResponse } from "@/common/dtos/reponse.dto";
-import { PaginationSpell } from "./dto/pagination-spell.dto";
+import { PaginationSpell } from "@/resources/spells/dto/pagination-spell.dto";
 
 @Injectable()
 export class SpellsService {
