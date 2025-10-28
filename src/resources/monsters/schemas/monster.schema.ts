@@ -1,35 +1,31 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import mongoose, { Document } from "mongoose";
-import { Affinities } from "@/resources/monsters/schemas/affinities/affinities.schema";
-import { Ability } from "@/resources/monsters/schemas/ability/ability.schema";
-import { Spellcasting } from "@/resources/monsters/schemas/spellcasting/spellcasting.schema";
-import { Stats } from "@/resources/monsters/schemas/stats/stats.schema";
+import { Monstercontent } from "./monster-content.schema";
 import { MetaDataSchema } from "@/common/schemas/metadata.schema";
+import mongoose from "mongoose";
 
-export type MonsterDocument = Monster & Document;
-
-@Schema({ timestamps: true })
+@Schema({timestamps: true})
 export class Monster extends MetaDataSchema {
-  @Prop({ type: mongoose.Schema.Types.ObjectId, auto: true })
-  _id: mongoose.Schema.Types.ObjectId;
 
-  @Prop({ required: true })
-  name: string;
-
-  @Prop({ type: Stats, default: {} })
-  stats: Stats;
-
-  @Prop({ type: Affinities, default: {} })
-  affinities: Affinities;
-
-  @Prop({ type: [Ability], default: [] })
-  abilities: Ability[];
-
-  @Prop({ type: [Spellcasting], default: [] })
-  spellcasting: Spellcasting[];
+  /**
+   *  Map de code ISO 3 → Schéma générique T
+   */
+  @Prop({
+    type: Map,
+    of: mongoose.Schema.Types.Mixed,
+    default: {},
+    validate: {
+      validator: function (map: Map<string, unknown>) {
+        return Array.from(map.keys()).every((key) => /^[a-z]{2}$/.test(key));
+      },
+      message: "Each key must be a 2-letter ISO code in lowercase (e.g., fr, en, es)."
+    }
+  })
+  translations: Map<string, Monstercontent>;
 
   @Prop({ default: null })
   deletedAt?: Date;
+
 }
 
 export const MonsterSchema = SchemaFactory.createForClass(Monster);
+

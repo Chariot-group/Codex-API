@@ -1,41 +1,31 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { EffectType } from "@/resources/spells/constants/effect-types.constant";
+import { Spellcontent, SpellContentSchema } from "./spell-content.schema";
 import { MetaDataSchema } from "@/common/schemas/metadata.schema";
+import mongoose from "mongoose";
 
-@Schema({ _id: false })
+@Schema({timestamps: true})
 export class Spell extends MetaDataSchema {
-  @Prop()
-  name?: string;
 
-  @Prop()
-  level?: number;
+  /**
+   *  Map de code ISO 3 → Schéma générique T
+   */
+  @Prop({
+    type: Map,
+    of: mongoose.Schema.Types.Mixed,
+    default: {},
+    validate: {
+      validator: function (map: Map<string, unknown>) {
+        return Array.from(map.keys()).every((key) => /^[a-z]{2}$/.test(key));
+      },
+      message: "Each key must be a 2-letter ISO code in lowercase (e.g., fr, en, es)."
+    }
+  })
+  translations: Map<string, Spellcontent>;
 
-  @Prop()
-  school?: string;
+  @Prop({ default: null })
+  deletedAt?: Date;
 
-  @Prop()
-  description?: string;
-
-  @Prop({ default: [] })
-  components: string[];
-
-  @Prop()
-  castingTime?: string;
-
-  @Prop()
-  duration?: string;
-
-  @Prop()
-  range?: string;
-
-  @Prop()
-  effectType?: EffectType;
-
-  @Prop()
-  damage?: string;
-
-  @Prop()
-  healing?: string;
 }
 
 export const SpellSchema = SchemaFactory.createForClass(Spell);
+

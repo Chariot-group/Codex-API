@@ -4,17 +4,12 @@ import { Speed } from "@/resources/monsters/schemas/stats/sub/speed.schema";
 import { AbilityScores } from "@/resources/monsters/schemas/stats/sub/abilityScores.schema";
 import { SavingThrows } from "@/resources/monsters/schemas/stats/sub/savingThrows.schema";
 import { Skills } from "@/resources/monsters/schemas/stats/sub/skill.schema";
-import { SIZES, Size } from "@/resources/monsters/constants/sizes.constant";
 import { Sense } from "@/resources/monsters/schemas/stats/sub/sense";
 
 @Schema({ _id: false })
 export class Stats {
-  @Prop({
-    type: String,
-    required: true,
-    enum: SIZES,
-  })
-  size: Size;
+  @Prop({ default: 0 })
+  size: number;
 
   @Prop({ default: 0 })
   maxHitPoints: number;

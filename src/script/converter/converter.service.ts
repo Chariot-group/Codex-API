@@ -1,10 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Spell } from "@/resources/spells/schemas/spell.schema";
 import { Model } from "mongoose";
-import { EffectType } from "@/resources/spells/constants/effect-types.constant";
 import { readFile } from "fs/promises";
-
+import { Spell } from "@/resources/spells/schemas/spell.schema";
+import { Spellcontent } from "@/resources/spells/schemas/spell-content.schema";
+import e from "express";
 @Injectable()
 export class ConverterService {
   readonly SERVICE_NAME = this.constructor.name;
@@ -19,39 +19,59 @@ export class ConverterService {
     const rawData = JSON.parse(file);
 
     Logger.log(`Conversion de ${rawData.length} sorts...`, this.SERVICE_NAME);
-    const spells: Partial<Spell>[] = rawData.map(this.mapExternalSpell);
+    const spellContents: Partial<Spellcontent>[] = rawData.map(this.mapExternalSpell);
+
+    const spells : Spell[] = spellContents.map(this.mapSpell);
 
     Logger.log(`Insertion en base...`, this.SERVICE_NAME);
     await this.spellModel.insertMany(spells);
     Logger.log(`✔️ ${spells.length} sorts insérés`, this.SERVICE_NAME);
   }
 
-  private mapExternalSpell(entry: any): Partial<Spell> {
+  private mapExternalSpell(entry: any): Partial<Spellcontent> {
     const baseDamage = entry.damage?.damage_at_slot_level?.["2"] ?? entry.damage?.damage_at_character_level?.["1"];
     const healing = entry.heal_at_slot_level?.["2"];
 
-    let effectType: EffectType;
+    let effectType: number;
 
     if (baseDamage) {
-      effectType = "attack";
+      effectType = 0;
     } else if (healing) {
-      effectType = "heal";
+      effectType = 1;
     } else {
-      effectType = "utility";
+      effectType = 2;
     }
 
-    return {
-      name: entry.name,
-      level: entry.level,
-      school: entry.school?.name,
-      description: (entry.desc ?? []).join("\n\n"),
-      components: entry.components ?? [],
-      castingTime: entry.casting_time,
-      duration: entry.duration,
-      range: entry.range,
-      effectType,
-      damage: baseDamage,
-      healing,
-    };
+    let spellcontent: Spellcontent = new Spellcontent()
+
+    spellcontent.name = entry.name;
+    spellcontent.level = entry.level;
+    spellcontent.school = entry.school.name;
+    spellcontent.description = (entry.desc ?? []).join("\n\n");
+    spellcontent.components = entry.components ?? [];
+    spellcontent.castingTime = entry.casting_time;
+    spellcontent.duration = entry.duration;
+    spellcontent.range = entry.range;
+    spellcontent.effectType = effectType;
+    spellcontent.damage = baseDamage;
+    spellcontent.srd = true;
+    spellcontent.createdAt = new Date();
+    spellcontent.updatedAt = new Date();
+    
+    return spellcontent;
+  }
+
+  private mapSpell(entry: Spellcontent): Spell {
+
+    let translations : Map<string, Spellcontent> = new Map();
+    translations.set("en", entry);
+
+    let spell: Spell = new Spell();
+
+    spell.tag = 1;
+    spell.languages = ["en"];
+    spell.translations = translations;
+    
+    return spell;
   }
 }
