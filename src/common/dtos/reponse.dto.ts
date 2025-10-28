@@ -1,5 +1,3 @@
-import { IPagination } from "./pagination.dto"
-
 export interface IResponse<T> {
     message : string,
     data: T
