@@ -1,16 +1,20 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from "@nestjs/common";
 import { Spell } from "@/resources/spells/schemas/spell.schema";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
+import { IResponse, IResponsePaginate } from "@/common/interfaces/reponse.interface";
 
 @Injectable()
 export class SpellsService {
   constructor(@InjectModel(Spell.name) private spellModel: Model<Spell>) {}
 
-  async findAll(query: { page?: number; offset?: number; sort?: string; name?: string }) {
+  private readonly SERVICE_NAME = SpellsService.name;
+  private readonly logger = new Logger(this.SERVICE_NAME);
+
+  async findAll(query: { page?: number; offset?: number; sort?: string; name?: string }) : Promise<IResponsePaginate<Spell[]>> {
     try {
       const { page = 1, offset = 10, name = "" } = query;
-      const skip = (page - 1) * offset;
+      const skip: number = (page - 1) * offset;
 
       const filters = {
         name: { $regex: `${decodeURIComponent(name)}`, $options: "i" },
@@ -22,13 +26,14 @@ export class SpellsService {
         query.sort.startsWith("-") ? (sort[query.sort.substring(1)] = -1) : (sort[query.sort] = 1);
       }
 
-      const totalItems = await this.spellModel.countDocuments(filters);
+      const totalItems: number = await this.spellModel.countDocuments(filters);
 
       const start: number = Date.now();
-      const spells = await this.spellModel.find(filters).skip(skip).limit(offset).sort(sort).exec();
+      const spells: Spell[] = await this.spellModel.find(filters).skip(skip).limit(offset).sort(sort).exec();
       const end: number = Date.now();
 
-      const message = `Spells found in ${end - start}ms`;
+      const message: string = `Spells found in ${end - start}ms`;
+      this.logger.log(message);
       return {
         message,
         data: spells,
@@ -39,43 +44,35 @@ export class SpellsService {
         },
       };
     } catch (error) {
-      const message = `Error while fetching spells: ${error.message}`;
+      const message: string = `Error while fetching spells: ${error.message}`;
+      this.logger.error(message);
       throw new InternalServerErrorException(message);
     }
   }
 
-  async findOneById(id: Types.ObjectId) {
+  async findOne(id: Types.ObjectId) : Promise<IResponse<Spell>> {
     try {
       const start: number = Date.now();
-      const spell = await this.spellModel.findById(id).exec();
+      const spell: Spell = await this.spellModel.findById(id).exec();
       const end: number = Date.now();
 
-      const message = `Spell #${id} found in ${end - start}ms`;
+      if(!spell) {
+        const message = `Spell #${id} not found`
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      const message: string = `Spell #${id} found in ${end - start}ms`;
+      this.logger.log(message);
       return {
         message,
         data: spell,
       };
-    } catch (error) {
-      const message = `Error while fetching spell #${id}: ${error.message}`;
-      throw new InternalServerErrorException(message);
-    }
-  }
 
-  async findOneByName(name: string) {
-    try {
-      const start: number = Date.now();
-      const spell = await this.spellModel
-        .findOne({ name: { $regex: `${decodeURIComponent(name)}`, $options: "i" } })
-        .exec();
-      const end: number = Date.now();
-
-      const message = `Spell ${name} found in ${end - start}ms`;
-      return {
-        message,
-        data: spell,
-      };
     } catch (error) {
-      const message = `Error while fetching spell ${name}: ${error.message}`;
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while fetching spell #${id}: ${error.message}`;
+      this.logger.error(message);
       throw new InternalServerErrorException(message);
     }
   }
