@@ -13,7 +13,7 @@ export class MetaDataSchema {
     tag: number;
     
     /**
-    * Liste des langues vérifier disponible
+    * Liste des langues vérifiées disponibles
     * @type String[]
     */
    @ApiProperty({ example: ["en"], type: [String] })

@@ -37,7 +37,7 @@ export class SpellContent {
   description?: string;
 
   @ApiProperty({ type: [String], example: ["V", "S", "M"] })
-  @Prop({ default: [] })
+  @Prop({ default: [], maxLength: 3 })
   components: string[];
 
   @ApiProperty({ example: "1 action" })
