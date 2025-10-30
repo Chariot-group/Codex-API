@@ -12,6 +12,8 @@ import { Skills } from "@/resources/monsters/schemas/stats/sub/skill.schema";
 import { Sense } from "@/resources/monsters/schemas/stats/sub/sense";
 import { Speed } from "@/resources/monsters/schemas/stats/sub/speed.schema";
 import { Affinities } from "@/resources/monsters/schemas/affinities/affinities.schema";
+import { Challenge } from "@/resources/monsters/schemas/challenge/challenge.schema";
+import { Profile } from "@/resources/monsters/schemas/profile/profile.schema";
 @Injectable()
 export class ConverterService {
   readonly SERVICE_NAME = this.constructor.name;
@@ -143,11 +145,28 @@ export class ConverterService {
     });
 
     monstercontent.affinities = tempAffinities;
-    monstercontent.abilities = this.mapAbilities((entry.special_abilities ?? []).filter((a: any) => !a.spellcasting));
+    monstercontent.abilities = this.mapAbilities(
+      (entry.special_abilities ?? []).filter((a: any) => !a.name.includes(["Spellcasting", "Legendary Resistance"])),
+    );
 
     monstercontent.spellcasting = await this.mapSpellcasting(
       (entry.special_abilities ?? []).find((a: any) => a.name === "Spellcasting"),
     );
+
+    let tempChallenge = new Challenge();
+    tempChallenge.challengeRating = entry.challenge_rating ?? 0;
+    tempChallenge.experiencePoints = entry.xp ?? 0;
+    monstercontent.challenge = tempChallenge;
+
+    let tempProfile = new Profile();
+    tempProfile.type = entry.type ? entry.type.charAt(0).toUpperCase() + entry.type.slice(1).toLowerCase() : "Unknown";
+    tempProfile.alignment = entry.alignment
+      ? entry.alignment.charAt(0).toUpperCase() + entry.alignment.slice(1).toLowerCase()
+      : "Unknown";
+    tempProfile.subtype = entry.subtype
+      ? entry.subtype.charAt(0).toUpperCase() + entry.subtype.slice(1).toLowerCase()
+      : "Unknown";
+    monstercontent.profile = tempProfile;
 
     return monstercontent;
   };
@@ -277,7 +296,9 @@ export class ConverterService {
 
     stats.speed = this.parseSpeedValue(entry.speed);
 
-    stats.languages = entry.languages.split(",") ?? [];
+    stats.languages =
+      entry.languages.split(", ").map((lang: string) => lang.charAt(0).toUpperCase() + lang.slice(1).toLowerCase()) ??
+      [];
 
     stats.savingThrows = this.mapSavingThrows(entry);
     stats.skills = this.mapSkills(entry);
