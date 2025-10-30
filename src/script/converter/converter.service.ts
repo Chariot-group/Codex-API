@@ -104,9 +104,6 @@ export class ConverterService {
       rawData.map((entry) => this.mapExternalMonster(entry)),
     );
 
-    console.log(monsterContents.length + " Monsters to convert");
-    console.log(monsterContents);
-
     const monsters: Monster[] = monsterContents.map(this.mapMonster);
 
     Logger.log(`Insertion en base...`, this.SERVICE_NAME);
@@ -129,8 +126,6 @@ export class ConverterService {
   }
 
   private mapExternalMonster = async (entry: any): Promise<MonsterContent> => {
-    console.log("Mapping monster: " + entry.index);
-
     const monstercontent: MonsterContent = new MonsterContent();
 
     monstercontent.srd = true;
@@ -323,7 +318,6 @@ export class ConverterService {
 
   private getTotalSpells(spellSlots: Record<string, number>): number {
     Logger.log(`Calculating total spells from slots: ${JSON.stringify(spellSlots)}`, this.SERVICE_NAME);
-    console.log(`Calculating total spells from slots: ${JSON.stringify(spellSlots)}`, this.SERVICE_NAME);
     return Object.values(spellSlots).reduce((total, count) => total + count, 0);
   }
 
@@ -333,7 +327,7 @@ export class ConverterService {
     const spellDocs = await Promise.all(
       spells.map(async (spell: any) => {
         const found = await this.spellModel.findOne({ "translations.en.name": spell.name }).lean();
-        return found ? { spell: found._id } : null; // Référence par _id (bonne pratique)
+        return found ? { spell: found._id } : null;
       }),
     );
 
