@@ -1,7 +1,7 @@
 import { Prop, Schema } from "@nestjs/mongoose";
 import { SchemaFactory } from "@nestjs/mongoose";
 import { Schema as MongooseSchema } from "mongoose";
-import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
+import { Spell } from "@/resources/spells/schemas/spell.schema";
 
 @Schema({ _id: false })
 export class Spellcasting {
@@ -29,8 +29,8 @@ export class Spellcasting {
   @Prop({ default: 0 })
   totalSlots: number;
 
-  @Prop({ type: [SpellContent], default: [] })
-  spells: SpellContent[];
+  @Prop({ type: [Spell], default: [] })
+  spells: Spell[];
 }
 
 export const SpellcastingSchema = SchemaFactory.createForClass(Spellcasting);
