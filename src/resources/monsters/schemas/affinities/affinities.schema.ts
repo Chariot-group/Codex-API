@@ -9,4 +9,7 @@ export class Affinities {
 
   @Prop({ type: [String], default: [] })
   vulnerabilities: string[];
+
+  @Prop({ type: [String], default: [] })
+  conditionImmunities: string[];
 }
