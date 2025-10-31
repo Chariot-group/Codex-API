@@ -35,7 +35,7 @@ export class SpellsController {
   @Get()
   @ApiOperation({ summary: "Get a collection of paginated spells" })
   @ApiOkResponse({
-    description: "Spells found",
+    description: "Spells found successfully",
     schema: {
       allOf: [
         { $ref: getSchemaPath(IPaginatedResponse) },

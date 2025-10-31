@@ -57,7 +57,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Spells found",
+            "description": "Spells found successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -101,7 +101,7 @@
         },
         "responses": {
           "200": {
-            "description": "Spell #ID created in Xms",
+            "description": "Spell created successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -122,12 +122,11 @@
             }
           },
           "400": {
-            "description": "",
+            "description": "Validation DTO failed",
             "content": {
               "application/json": {
                 "schema": {
                   "allOf": [
-                    {},
                     {
                       "example": {
                         "message": [
@@ -177,7 +176,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Spell #ID found",
+            "description": "Spell found successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -280,12 +279,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-10-31T16:21:07.640Z"
+            "example": "2025-10-31T16:39:59.109Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-10-31T16:21:07.640Z"
+            "example": "2025-10-31T16:39:59.109Z"
           },
           "name": {
             "type": "string",
