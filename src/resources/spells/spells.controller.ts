@@ -1,4 +1,4 @@
-import { Controller, Get, BadRequestException, Logger, Query, Param } from "@nestjs/common";
+import { Controller, Get, BadRequestException, Logger, Query, Param, Patch, Body } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiOkResponse, ApiExtraModels, getSchemaPath, ApiParam } from "@nestjs/swagger";
 import { SpellsService } from "@/resources/spells/spells.service";
 import { Types } from "mongoose";
@@ -8,6 +8,8 @@ import { IPaginatedResponse, IResponse } from "@/common/dtos/reponse.dto";
 import { PaginationSpell } from "@/resources/spells/dtos/find-all.dto";
 import { langParam } from "@/resources/spells/dtos/find-one.dto";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
+import { UpdateSpellDto } from "./dtos/update-spell.dto";
+import { find } from "rxjs";
 
 @ApiExtraModels(Spell, SpellContent, IResponse, IPaginatedResponse)
 @Controller("spells")
@@ -87,5 +89,19 @@ export class SpellsController {
   async findOne(@Param("id", ParseMongoIdPipe) id: Types.ObjectId, @Query() query: langParam): Promise<IResponse<Spell>> {
     const { lang = "en"} = query;
     return this.validateResource(id, lang);
+  }
+
+  @Patch(":id")
+  @ApiOperation({ summary: "Update a spell by ID" })
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the spell to retrieve",
+    example: "507f1f77bcf86cd799439011",
+  })
+  async update(@Param("id", ParseMongoIdPipe) id: Types.ObjectId, @Body() updateData: UpdateSpellDto): Promise<IResponse<Spell>> {
+    await this.validateResource(id, "en");
+    return this.spellsService.update(id, updateData);
   }
 }

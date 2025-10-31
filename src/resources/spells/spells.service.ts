@@ -168,4 +168,26 @@ export class SpellsService {
       throw new InternalServerErrorException(message);
     }
   }
+
+  async update(id: Types.ObjectId, updateData: Partial<Spell>): Promise<IResponse<Spell>> {
+    try {
+      const start: number = Date.now();
+      const updatedSpell: Spell = await this.spellModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+      const end: number = Date.now();
+
+      const message: string = `Spell #${id} updated in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: this.mapper.transform(updatedSpell),
+      };
+
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while updating spell #${id}: ${error.message}`;
+      this.logger.error(message);
+      throw new InternalServerErrorException(message);
+    }
+  }
 }
