@@ -13,7 +13,7 @@ export class DtoMapper<T extends Translatable>{
      * @param entry a dto that has languages and translations
      * @returns the dto with modified languages
      */
-    transform(entry: T): T {
+    calculAvailablesLanguages(entry: T): T {
         const languages = entry.languages;
         const currentTranslations =
         entry.translations instanceof Map
@@ -31,9 +31,9 @@ export class DtoMapper<T extends Translatable>{
      * @param entry list of dtos that has languages and translations
      * @returns the dto list with modified languages
      */
-    transforms(entry: T[]): T[] {
+    calculAvailablesLanguagesList(entry: T[]): T[] {
         return entry.map(val => {
-            return this.transform(val);
+            return this.calculAvailablesLanguages(val);
         });
     }
 
