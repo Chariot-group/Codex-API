@@ -139,9 +139,63 @@
           },
           "404": {
             "description": "Spell #ID not found"
+          },
+          "410": {
+            "description": "Spell #ID has been deleted"
           }
         },
         "summary": "Get a spell by ID",
+        "tags": [
+          "Spells"
+        ]
+      },
+      "delete": {
+        "operationId": "SpellsController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the spell to delete",
+            "schema": {
+              "example": "507f1f77bcf86cd799439011",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Spell #ID deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Spell"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error while fetching spell #ID: Id is not a valid mongoose id"
+          },
+          "404": {
+            "description": "Spell #ID not found"
+          },
+          "410": {
+            "description": "Spell #ID has been deleted"
+          }
+        },
+        "summary": "Delete a spell by ID",
         "tags": [
           "Spells"
         ]
@@ -217,12 +271,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-10-28T19:28:04.871Z"
+            "example": "2025-11-01T10:02:53.956Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-10-28T19:28:04.871Z"
+            "example": "2025-11-01T10:02:53.956Z"
           },
           "name": {
             "type": "string",
