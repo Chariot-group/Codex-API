@@ -4,10 +4,9 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { IResponse, IPaginatedResponse } from "@/common/dtos/reponse.dto";
 import { PaginationSpell } from "@/resources/spells/dtos/find-all.dto";
-import { DtoMapper } from "@/common/mappers/common.mapper";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
-import { CreateSpellDto } from "./dtos/create-spell.dto";
-import { SpellsMapper } from "./mappers/spells.mapper";
+import { CreateSpellDto } from "@/resources/spells/dtos/create-spell.dto";
+import { SpellsMapper } from "@/resources/spells/mappers/spells.mapper";
 
 @Injectable()
 export class SpellsService {

@@ -6,6 +6,11 @@ import { CreateSpellContentDto } from "@/resources/spells/dtos/create-spell-cont
 
 export class SpellsMapper extends DtoMapper<Spell> {
 
+    /**
+     * Convert CreateSpellDto to Spell entity
+     * @param dto CreateSpellDto source
+     * @returns Spell entity
+     */
     dtoToEntity(dto: CreateSpellDto): Spell {
         const spell: Spell = new Spell();
 
@@ -20,6 +25,11 @@ export class SpellsMapper extends DtoMapper<Spell> {
         return spell;
     }
 
+    /**
+     * Convert CreateSpellContentDto to SpellContent entity
+     * @param dto CreateSpellContentDto source
+     * @returns SpellContent entity
+     */
     dtoSpellContentToEntity(dto: CreateSpellContentDto): SpellContent {
         const spellContent: SpellContent = new SpellContent();
 
