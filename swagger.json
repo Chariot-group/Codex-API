@@ -57,7 +57,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Spells found",
+            "description": "Spells found successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -82,6 +82,68 @@
           }
         },
         "summary": "Get a collection of paginated spells",
+        "tags": [
+          "Spells"
+        ]
+      },
+      "post": {
+        "operationId": "SpellsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSpellDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Spell created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Spell"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation DTO failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "example": {
+                        "message": [
+                          "spellContent.description must be a string",
+                          "spellContent.level must be a number conforming to the specified constraints"
+                        ],
+                        "statusCode": 400,
+                        "error": "Bad Request"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a new spell",
         "tags": [
           "Spells"
         ]
@@ -114,7 +176,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Spell #ID found",
+            "description": "Spell found successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -271,12 +333,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-01T10:02:53.956Z"
+            "example": "2025-10-31T16:39:59.109Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-01T10:02:53.956Z"
+            "example": "2025-10-31T16:39:59.109Z"
           },
           "name": {
             "type": "string",
@@ -442,6 +504,91 @@
           "message",
           "data",
           "pagination"
+        ]
+      },
+      "CreateSpellContentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Fireball"
+          },
+          "description": {
+            "type": "string",
+            "example": "A bright streak flashes from your pointing finger to a point you choose within range."
+          },
+          "level": {
+            "type": "number",
+            "example": 3
+          },
+          "school": {
+            "type": "string",
+            "example": "Evocation"
+          },
+          "castingTime": {
+            "type": "string",
+            "example": "1 action"
+          },
+          "range": {
+            "type": "string",
+            "example": "150 feet"
+          },
+          "components": {
+            "example": [
+              "V",
+              "S",
+              "M"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "duration": {
+            "type": "string",
+            "example": "Instantaneous"
+          },
+          "effectType": {
+            "type": "number",
+            "example": 1
+          },
+          "damage": {
+            "type": "string",
+            "example": "8d6"
+          },
+          "healing": {
+            "type": "string",
+            "example": "Heal 4d8 + spellcasting modifier"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "level",
+          "school",
+          "castingTime",
+          "range",
+          "components",
+          "duration",
+          "effectType",
+          "damage",
+          "healing"
+        ]
+      },
+      "CreateSpellDto": {
+        "type": "object",
+        "properties": {
+          "lang": {
+            "type": "string",
+            "example": "en"
+          },
+          "spellContent": {
+            "$ref": "#/components/schemas/CreateSpellContentDto"
+          }
+        },
+        "required": [
+          "lang",
+          "spellContent"
         ]
       }
     }

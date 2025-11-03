@@ -1,4 +1,4 @@
-import { Controller, Get, BadRequestException, Logger, Query, Param, Delete } from "@nestjs/common";
+import { Controller, Get, BadRequestException, Logger, Query, Param, Post, Req, Body, Delete } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiOkResponse, ApiExtraModels, getSchemaPath, ApiParam } from "@nestjs/swagger";
 import { SpellsService } from "@/resources/spells/spells.service";
 import { Types } from "mongoose";
@@ -8,6 +8,7 @@ import { IPaginatedResponse, IResponse } from "@/common/dtos/reponse.dto";
 import { PaginationSpell } from "@/resources/spells/dtos/find-all.dto";
 import { langParam } from "@/resources/spells/dtos/find-one.dto";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
+import { CreateSpellDto } from "@/resources/spells/dtos/create-spell.dto";
 
 @ApiExtraModels(Spell, SpellContent, IResponse, IPaginatedResponse)
 @Controller("spells")
@@ -34,7 +35,7 @@ export class SpellsController {
   @Get()
   @ApiOperation({ summary: "Get a collection of paginated spells" })
   @ApiOkResponse({
-    description: "Spells found",
+    description: "Spells found successfully",
     schema: {
       allOf: [
         { $ref: getSchemaPath(IPaginatedResponse) },
@@ -70,7 +71,7 @@ export class SpellsController {
   })
   @ApiOperation({ summary: "Get a spell by ID" })
   @ApiOkResponse({
-    description: "Spell #ID found",
+    description: "Spell found successfully",
     schema: {
       allOf: [
         { $ref: getSchemaPath(IResponse) },
@@ -88,6 +89,43 @@ export class SpellsController {
   async findOne(@Param("id", ParseMongoIdPipe) id: Types.ObjectId, @Query() query: langParam): Promise<IResponse<Spell>> {
     const { lang = "en"} = query;
     return this.validateResource(id, lang);
+  }
+
+  @Post()
+  @ApiOperation({ summary: "Create a new spell" })
+  @ApiOkResponse({
+    description: "Spell created successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(IResponse) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(Spell) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({ 
+    status: 400,
+    description: "Validation DTO failed",
+    schema: {
+      allOf: [
+        {
+          example: {
+            message: [
+              "spellContent.description must be a string",
+              "spellContent.level must be a number conforming to the specified constraints"
+            ],
+            statusCode: 400,
+            error: "Bad Request"
+          }
+        }
+      ],
+    }
+  })
+  async create(@Body() spellDto: CreateSpellDto): Promise<IResponse<Spell>> {
+    return this.spellsService.create(spellDto);
   }
 
   @Delete(":id")

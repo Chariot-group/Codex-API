@@ -4,8 +4,9 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { IResponse, IPaginatedResponse } from "@/common/dtos/reponse.dto";
 import { PaginationSpell } from "@/resources/spells/dtos/find-all.dto";
-import { DtoMapper } from "@/common/mappers/common.mapper";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
+import { CreateSpellDto } from "@/resources/spells/dtos/create-spell.dto";
+import { SpellsMapper } from "@/resources/spells/mappers/spells.mapper";
 
 @Injectable()
 export class SpellsService {
@@ -13,12 +14,14 @@ export class SpellsService {
 
   private readonly SERVICE_NAME = SpellsService.name;
   private readonly logger = new Logger(this.SERVICE_NAME);
-  private readonly mapper = new DtoMapper<Spell>();
+  private readonly mapper = new SpellsMapper();
 
   async findAll(paginationSpell: PaginationSpell) : Promise<IPaginatedResponse<Spell[]>> {
     try {
       const { page = 1, offset = 10, name = "", lang = "" } = paginationSpell;
       const skip = (page - 1) * offset;
+
+      this.logger.log(`Finding spells: page=${page}, offset=${offset}, skip='${skip}'`);
 
       const filters: any = { deletedAt: null };
       let projection: any = {
@@ -116,7 +119,7 @@ export class SpellsService {
 
       return {
         message: `Spells found in ${end - start}ms`,
-        data: this.mapper.transforms(spells),
+        data: this.mapper.calculAvailablesLanguagesList(spells),
         pagination: {
           page,
           offset,
@@ -164,12 +167,37 @@ export class SpellsService {
 
       return {
         message,
-        data: this.mapper.transform(spell),
+        data: this.mapper.calculAvailablesLanguages(spell),
       };
 
     } catch (error) {
       if (error instanceof HttpException) throw error;
       const message: string = `Error while fetching spell #${id}: ${error.message}`;
+      this.logger.error(message);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  async create(createSpellDto: CreateSpellDto): Promise<IResponse<Spell>> {
+    try {
+
+      const spell: Spell = this.mapper.dtoToEntity(createSpellDto);
+
+      const start: number = Date.now();
+      const createdSpell = new this.spellModel(spell);
+      const savedSpell = await createdSpell.save();
+      const end: number = Date.now();
+
+      const message: string = `Spell #${savedSpell._id} created in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: this.mapper.calculAvailablesLanguages(savedSpell),
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while creating spell: ${error.message}`;
       this.logger.error(message);
       throw new InternalServerErrorException(message);
     }
@@ -188,7 +216,7 @@ export class SpellsService {
 
       return {
         message,
-        data: this.mapper.transform(spell),
+        data: this.mapper.calculAvailablesLanguages(spell),
       };
 
     } catch (error) {
