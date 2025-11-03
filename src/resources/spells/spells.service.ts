@@ -21,6 +21,8 @@ export class SpellsService {
       const { page = 1, offset = 10, name = "", lang = "" } = paginationSpell;
       const skip = (page - 1) * offset;
 
+      this.logger.log(`Finding spells: page=${page}, offset=${offset}, skip='${skip}'`);
+
       const filters: any = { deletedAt: null };
       let projection: any = {
         tag: 1,
