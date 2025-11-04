@@ -146,7 +146,7 @@ export class ConverterService {
       resistances: entry.damage_resistances ?? [],
       immunities: entry.damage_immunities ?? [],
       vulnerabilities: entry.damage_vulnerabilities ?? [],
-      // conditionImmunities: [], //TODO
+      conditionImmunities: (entry.condition_immunities ?? []).map((condition: any) => condition.name),
     });
 
     monstercontent.affinities = tempAffinities;
