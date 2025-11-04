@@ -1,16 +1,4 @@
-import {
-  Controller,
-  Get,
-  BadRequestException,
-  Logger,
-  Query,
-  Param,
-  Patch,
-  Body,
-  Post,
-  Req,
-  Delete,
-} from "@nestjs/common";
+import { Controller, Get, BadRequestException, Logger, Query, Param, Patch, Body, Post, Delete, ForbiddenException } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiOkResponse, ApiExtraModels, getSchemaPath, ApiParam } from "@nestjs/swagger";
 import { SpellsService } from "@/resources/spells/spells.service";
 import { Types } from "mongoose";
@@ -150,6 +138,21 @@ export class SpellsController {
     @Body() updateData: UpdateSpellDto,
   ): Promise<IResponse<Spell>> {
     const oldSpell: IResponse<Spell> = await this.validateResource(id, "en");
+
+    for (const [lang, translation] of oldSpell.data.translations) {
+      if (translation.srd) {
+        const message = `Spell #${id} is in srd and cannot be modified`;
+        this.logger.error(message);
+        throw new ForbiddenException(message);
+      }
+    }
+
+    if (oldSpell.data.translations.has("srd")) {
+      const message = `Spell #${id} is in srd and cannot be modified`;
+      this.logger.error(message);
+      throw new ForbiddenException(message);
+    }
+
     return this.spellsService.update(id, oldSpell.data, updateData);
   }
 

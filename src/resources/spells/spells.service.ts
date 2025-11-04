@@ -22,8 +22,6 @@ export class SpellsService {
       const { page = 1, offset = 10, name = "", lang = "" } = paginationSpell;
       const skip = (page - 1) * offset;
 
-      this.logger.log(`Finding spells: page=${page}, offset=${offset}, skip='${skip}'`);
-
       const filters: any = { deletedAt: null };
       let projection: any = {
         tag: 1,
@@ -98,23 +96,26 @@ export class SpellsService {
         const decodedName: string = decodeURIComponent(name).toLowerCase();
 
         spells = spells.map(spell => {
-          const filteredTranslations: Map<string, SpellContent> = new Map();
+          let filteredTranslations: Map<string, SpellContent> = new Map();
 
           // On parcours toutes les langues
           for (const language of spell.languages) {
             const translation: SpellContent = spell.translations.get(language);
 
             // Si le nom renseigné dans cette langue match
-            if (translation && translation.name && translation.name.toLowerCase().includes(decodedName)) {
-              filteredTranslations[language] = translation;
+            if (translation && translation.name && translation.name.toLowerCase().includes(decodedName.toLowerCase())) {
+              filteredTranslations.set(language, translation);
             }
           }
-
           // On remplace par les traduction qui on un nom qui match avec la recherche
           spell.translations = filteredTranslations;
+
+          this.logger.log(`Filtered translations: ${JSON.stringify(filteredTranslations)}`);
           return spell;
         }) as Spell[];
       }
+
+      this.logger.log(JSON.stringify(spells));
 
       this.logger.log(`Spells found in ${end - start}ms`);
 
