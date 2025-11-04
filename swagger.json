@@ -25,8 +25,8 @@
             "in": "query",
             "description": "Page number",
             "schema": {
-              "minimum": 0,
-              "default": 0,
+              "minimum": 1,
+              "default": 1,
               "example": 1,
               "type": "number"
             }
@@ -57,7 +57,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Spells found",
+            "description": "Spells found successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -85,6 +85,68 @@
         "tags": [
           "Spells"
         ]
+      },
+      "post": {
+        "operationId": "SpellsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSpellDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Spell created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Spell"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation DTO failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "example": {
+                        "message": [
+                          "spellContent.description must be a string",
+                          "spellContent.level must be a number conforming to the specified constraints"
+                        ],
+                        "statusCode": 400,
+                        "error": "Bad Request"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a new spell",
+        "tags": [
+          "Spells"
+        ]
       }
     },
     "/spells/{id}": {
@@ -95,7 +157,7 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "The ID of the spell to retrieve",
+            "description": "The ID of the spell to update",
             "schema": {
               "example": "507f1f77bcf86cd799439011",
               "type": "string"
@@ -103,7 +165,7 @@
           },
           {
             "name": "lang",
-            "required": false,
+            "required": true,
             "in": "path",
             "description": "The ISO 2 code of translation",
             "schema": {
@@ -114,7 +176,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Spell #ID found",
+            "description": "Spell found successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -139,9 +201,141 @@
           },
           "404": {
             "description": "Spell #ID not found"
+          },
+          "410": {
+            "description": "Spell #ID has been deleted"
           }
         },
         "summary": "Get a spell by ID",
+        "tags": [
+          "Spells"
+        ]
+      },
+      "patch": {
+        "operationId": "SpellsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the spell to retrieve",
+            "schema": {
+              "example": "507f1f77bcf86cd799439011",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSpellDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Spell updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Spell"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation DTO failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "example": {
+                        "message": [
+                          "tag must be a number conforming to the specified constraints"
+                        ],
+                        "statusCode": 400,
+                        "error": "Bad Request"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Spell #ID not found"
+          },
+          "410": {
+            "description": "Spell #ID has been deleted"
+          }
+        },
+        "summary": "Update a spell by ID",
+        "tags": [
+          "Spells"
+        ]
+      },
+      "delete": {
+        "operationId": "SpellsController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the spell to delete",
+            "schema": {
+              "example": "507f1f77bcf86cd799439011",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Spell #ID deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Spell"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error while fetching spell #ID: Id is not a valid mongoose id"
+          },
+          "404": {
+            "description": "Spell #ID not found"
+          },
+          "410": {
+            "description": "Spell #ID has been deleted"
+          }
+        },
+        "summary": "Delete a spell by ID",
         "tags": [
           "Spells"
         ]
@@ -217,12 +411,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-10-28T19:28:04.871Z"
+            "example": "2025-11-04T07:10:16.898Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-10-28T19:28:04.871Z"
+            "example": "2025-11-04T07:10:16.898Z"
           },
           "name": {
             "type": "string",
@@ -388,6 +582,108 @@
           "message",
           "data",
           "pagination"
+        ]
+      },
+      "UpdateSpellDto": {
+        "type": "object",
+        "properties": {
+          "tag": {
+            "type": "number",
+            "example": 1,
+            "description": "0: Homebrew, 1: Certified by Chariot",
+            "enum": [
+              0,
+              1
+            ]
+          }
+        },
+        "required": [
+          "tag"
+        ]
+      },
+      "CreateSpellContentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Fireball"
+          },
+          "description": {
+            "type": "string",
+            "example": "A bright streak flashes from your pointing finger to a point you choose within range."
+          },
+          "level": {
+            "type": "number",
+            "example": 3
+          },
+          "school": {
+            "type": "string",
+            "example": "Evocation"
+          },
+          "castingTime": {
+            "type": "string",
+            "example": "1 action"
+          },
+          "range": {
+            "type": "string",
+            "example": "150 feet"
+          },
+          "components": {
+            "example": [
+              "V",
+              "S",
+              "M"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "duration": {
+            "type": "string",
+            "example": "Instantaneous"
+          },
+          "effectType": {
+            "type": "number",
+            "example": 1
+          },
+          "damage": {
+            "type": "string",
+            "example": "8d6"
+          },
+          "healing": {
+            "type": "string",
+            "example": "Heal 4d8 + spellcasting modifier"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "level",
+          "school",
+          "castingTime",
+          "range",
+          "components",
+          "duration",
+          "effectType",
+          "damage",
+          "healing"
+        ]
+      },
+      "CreateSpellDto": {
+        "type": "object",
+        "properties": {
+          "lang": {
+            "type": "string",
+            "example": "en"
+          },
+          "spellContent": {
+            "$ref": "#/components/schemas/CreateSpellContentDto"
+          }
+        },
+        "required": [
+          "lang",
+          "spellContent"
         ]
       }
     }
