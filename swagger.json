@@ -53,6 +53,26 @@
               "example": "-createdAt",
               "type": "string"
             }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "Filter spells by name",
+            "schema": {
+              "example": "Fireball",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Filter by language code (ISO 2 code)",
+            "schema": {
+              "example": "en",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -344,12 +364,90 @@
     "/monsters": {
       "get": {
         "operationId": "MonstersController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Number of items to return",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Sort field (prefix with '-' for descending order)",
+            "schema": {
+              "example": "-createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "Filter monsters by name",
+            "schema": {
+              "example": "Goblin",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Filter by language code (ISO 2 code)",
+            "schema": {
+              "example": "en",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Monsters found successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IPaginatedResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Monster"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         },
+        "summary": "Get a collection of paginated monsters",
         "tags": [
           "Monsters"
         ]
@@ -411,12 +509,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-04T07:10:16.898Z"
+            "example": "2025-11-07T08:04:53.345Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-04T07:10:16.898Z"
+            "example": "2025-11-07T08:04:53.345Z"
           },
           "name": {
             "type": "string",
@@ -508,9 +606,6 @@
             "type": "object",
             "additionalProperties": {
               "$ref": "#/components/schemas/SpellContent"
-            },
-            "example": {
-              "en": "#/components/schemas/SpellContent"
             }
           },
           "deletedAt": {
@@ -684,6 +779,424 @@
         "required": [
           "lang",
           "spellContent"
+        ]
+      },
+      "Speed": {
+        "type": "object",
+        "properties": {
+          "walk": {
+            "type": "number",
+            "example": 30
+          },
+          "climb": {
+            "type": "number",
+            "example": 20
+          },
+          "swim": {
+            "type": "number",
+            "example": 15
+          },
+          "fly": {
+            "type": "number",
+            "example": 60
+          },
+          "burrow": {
+            "type": "number",
+            "example": 10
+          }
+        },
+        "required": [
+          "walk",
+          "climb",
+          "swim",
+          "fly",
+          "burrow"
+        ]
+      },
+      "AbilityScores": {
+        "type": "object",
+        "properties": {
+          "strength": {
+            "type": "number",
+            "example": 8
+          },
+          "dexterity": {
+            "type": "number",
+            "example": 18
+          },
+          "constitution": {
+            "type": "number",
+            "example": 14
+          },
+          "intelligence": {
+            "type": "number",
+            "example": 12
+          },
+          "wisdom": {
+            "type": "number",
+            "example": 10
+          },
+          "charisma": {
+            "type": "number",
+            "example": 14
+          }
+        },
+        "required": [
+          "strength",
+          "dexterity",
+          "constitution",
+          "intelligence",
+          "wisdom",
+          "charisma"
+        ]
+      },
+      "SavingThrows": {
+        "type": "object",
+        "properties": {
+          "strength": {
+            "type": "number",
+            "example": -1
+          },
+          "dexterity": {
+            "type": "number",
+            "example": 4
+          },
+          "constitution": {
+            "type": "number",
+            "example": 2
+          },
+          "intelligence": {
+            "type": "number",
+            "example": 1
+          },
+          "wisdom": {
+            "type": "number",
+            "example": 0
+          },
+          "charisma": {
+            "type": "number",
+            "example": 2
+          }
+        },
+        "required": [
+          "strength",
+          "dexterity",
+          "constitution",
+          "intelligence",
+          "wisdom",
+          "charisma"
+        ]
+      },
+      "Skills": {
+        "type": "object",
+        "properties": {
+          "athletics": {
+            "type": "number",
+            "example": 3
+          },
+          "acrobatics": {
+            "type": "number",
+            "example": 2
+          },
+          "sleightHand": {
+            "type": "number",
+            "example": 3
+          },
+          "stealth": {
+            "type": "number",
+            "example": -1
+          },
+          "arcana": {
+            "type": "number",
+            "example": 0
+          },
+          "history": {
+            "type": "number",
+            "example": 5
+          },
+          "investigation": {
+            "type": "number",
+            "example": 2
+          },
+          "nature": {
+            "type": "number",
+            "example": 0
+          },
+          "religion": {
+            "type": "number",
+            "example": 7
+          },
+          "animalHandling": {
+            "type": "number",
+            "example": 3
+          },
+          "insight": {
+            "type": "number",
+            "example": -1
+          },
+          "medicine": {
+            "type": "number",
+            "example": 1
+          },
+          "perception": {
+            "type": "number",
+            "example": 7
+          },
+          "survival": {
+            "type": "number",
+            "example": 2
+          },
+          "deception": {
+            "type": "number",
+            "example": 2
+          },
+          "intimidation": {
+            "type": "number",
+            "example": 2
+          },
+          "performance": {
+            "type": "number",
+            "example": 1
+          },
+          "persuasion": {
+            "type": "number",
+            "example": 2
+          }
+        },
+        "required": [
+          "athletics",
+          "acrobatics",
+          "sleightHand",
+          "stealth",
+          "arcana",
+          "history",
+          "investigation",
+          "nature",
+          "religion",
+          "animalHandling",
+          "insight",
+          "medicine",
+          "perception",
+          "survival",
+          "deception",
+          "intimidation",
+          "performance",
+          "persuasion"
+        ]
+      },
+      "Sense": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "darkvision"
+          },
+          "value": {
+            "type": "number",
+            "example": 60
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ]
+      },
+      "Stats": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "number",
+            "example": 3
+          },
+          "maxHitPoints": {
+            "type": "number",
+            "example": 100
+          },
+          "currentHitPoints": {
+            "type": "number",
+            "example": 95
+          },
+          "tempHitPoints": {
+            "type": "number",
+            "example": 7
+          },
+          "armorClass": {
+            "type": "number",
+            "example": 15
+          },
+          "speed": {
+            "$ref": "#/components/schemas/Speed"
+          },
+          "abilityScores": {
+            "$ref": "#/components/schemas/AbilityScores"
+          },
+          "languages": {
+            "example": [
+              "Common",
+              "Elvish"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "passivePerception": {
+            "type": "number",
+            "example": 12
+          },
+          "savingThrows": {
+            "$ref": "#/components/schemas/SavingThrows"
+          },
+          "skills": {
+            "$ref": "#/components/schemas/Skills"
+          },
+          "senses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Sense"
+            }
+          }
+        },
+        "required": [
+          "size",
+          "maxHitPoints",
+          "currentHitPoints",
+          "tempHitPoints",
+          "armorClass",
+          "speed",
+          "abilityScores",
+          "languages",
+          "passivePerception",
+          "savingThrows",
+          "skills",
+          "senses"
+        ]
+      },
+      "Affinities": {
+        "type": "object",
+        "properties": {}
+      },
+      "Ability": {
+        "type": "object",
+        "properties": {}
+      },
+      "Spellcasting": {
+        "type": "object",
+        "properties": {}
+      },
+      "Actions": {
+        "type": "object",
+        "properties": {}
+      },
+      "Challenge": {
+        "type": "object",
+        "properties": {}
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {}
+      },
+      "MonsterContent": {
+        "type": "object",
+        "properties": {
+          "srd": {
+            "type": "boolean",
+            "example": true
+          },
+          "deletedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": null
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2025-11-07T08:04:53.598Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2025-11-07T08:04:53.598Z"
+          },
+          "name": {
+            "type": "string",
+            "example": "Goblin"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/Stats"
+          },
+          "affinities": {
+            "$ref": "#/components/schemas/Affinities"
+          },
+          "abilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Ability"
+            }
+          },
+          "spellcasting": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Spellcasting"
+            }
+          },
+          "actions": {
+            "$ref": "#/components/schemas/Actions"
+          },
+          "challenge": {
+            "$ref": "#/components/schemas/Challenge"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/Profile"
+          }
+        },
+        "required": [
+          "srd",
+          "deletedAt",
+          "createdAt",
+          "updatedAt",
+          "name",
+          "stats",
+          "affinities",
+          "abilities",
+          "spellcasting",
+          "actions",
+          "challenge"
+        ]
+      },
+      "Monster": {
+        "type": "object",
+        "properties": {
+          "tag": {
+            "type": "number",
+            "example": 1
+          },
+          "languages": {
+            "example": [
+              "en"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "translations": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MonsterContent"
+            }
+          },
+          "deletedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": null
+          }
+        },
+        "required": [
+          "tag",
+          "languages",
+          "translations",
+          "deletedAt"
         ]
       }
     }

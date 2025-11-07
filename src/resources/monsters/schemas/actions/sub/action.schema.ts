@@ -4,7 +4,11 @@ import { Save } from "@/resources/monsters/schemas/actions/sub/save.schema";
 import { Usage } from "@/resources/monsters/schemas/actions/sub/usage.schema";
 import { Schema } from "@nestjs/mongoose";
 
-@Schema({ _id: false })
+/**
+ * Le suppressReservedKeysWarning permet d'éviter les warnings de Mongoose
+ * liés à l'utilisation de "save" comme nom de propriété.
+ */
+@Schema({ _id: false, suppressReservedKeysWarning: true })
 export class Action {
   @Prop()
   name?: string;

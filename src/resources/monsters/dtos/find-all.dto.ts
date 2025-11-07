@@ -2,11 +2,11 @@ import { Pagination } from "@/common/dtos/pagination.dto";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional, IsString } from "class-validator";
 
-export class PaginationSpell extends Pagination {
+export class PaginationMonster extends Pagination {
   @ApiProperty({
-    description: "Filter spells by name",
+    description: "Filter monsters by name",
     required: false,
-    example: "Fireball",
+    example: "Goblin",
     type: String,
   })
   @IsOptional()
