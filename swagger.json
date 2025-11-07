@@ -469,12 +469,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-07T07:55:49.056Z"
+            "example": "2025-11-07T07:58:35.904Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-07T07:55:49.056Z"
+            "example": "2025-11-07T07:58:35.904Z"
           },
           "name": {
             "type": "string",
@@ -566,9 +566,6 @@
             "type": "object",
             "additionalProperties": {
               "$ref": "#/components/schemas/SpellContent"
-            },
-            "example": {
-              "en": "#/components/schemas/SpellContent"
             }
           },
           "deletedAt": {
@@ -1074,12 +1071,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-07T07:55:49.325Z"
+            "example": "2025-11-07T07:58:36.156Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-07T07:55:49.325Z"
+            "example": "2025-11-07T07:58:36.156Z"
           },
           "name": {
             "type": "string",
