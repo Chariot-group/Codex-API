@@ -461,16 +461,56 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the monster to update",
             "schema": {
+              "example": "507f1f77bcf86cd799439011",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lang",
+            "required": true,
+            "in": "path",
+            "description": "The ISO 2 code of translation",
+            "schema": {
+              "example": "en",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Monster found successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Monster"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error while fetching monster #ID: Id is not a valid mongoose id"
+          },
+          "404": {
+            "description": "Monster #ID not found"
+          },
+          "410": {
+            "description": "Monster #ID has been deleted"
           }
         },
+        "summary": "Get a monster by ID",
         "tags": [
           "Monsters"
         ]
@@ -509,12 +549,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-07T08:04:53.345Z"
+            "example": "2025-11-13T07:32:03.191Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-07T08:04:53.345Z"
+            "example": "2025-11-13T07:32:03.191Z"
           },
           "name": {
             "type": "string",
@@ -1111,12 +1151,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-07T08:04:53.598Z"
+            "example": "2025-11-13T07:32:03.475Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-07T08:04:53.598Z"
+            "example": "2025-11-13T07:32:03.475Z"
           },
           "name": {
             "type": "string",
