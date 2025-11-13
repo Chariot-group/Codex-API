@@ -1,10 +1,18 @@
-import { HttpException, Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
+import {
+  GoneException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Monster } from "@/resources/monsters/schemas/monster.schema";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import { PaginationMonster } from "@/resources/monsters/dtos/find-all.dto";
 import { MonsterContent } from "@/resources/monsters/schemas/monster-content.schema";
 import { MonstersMapper } from "@/resources/monsters/mappers/monsters.mapper";
+import { IResponse } from "@/common/dtos/reponse.dto";
 
 @Injectable()
 export class MonstersService {
@@ -135,7 +143,57 @@ export class MonstersService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} monster`;
+  async findOne(id: Types.ObjectId, lang: string): Promise<IResponse<Monster>> {
+    try {
+      let projection: any = {
+        tag: 1,
+        languages: 1,
+        translations: 1,
+        deletedAt: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      };
+
+      const start: number = Date.now();
+      const monster: Monster = await this.monsterModel.findById(id).select(projection).exec();
+      const end: number = Date.now();
+
+      if (!monster) {
+        const message = `Monster #${id} not found`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      if (monster.deletedAt) {
+        const message = `Monster #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      // Si la langue spécifiée est invalide, on recupère la première langue disponible
+
+      if (!monster.languages.includes(lang)) {
+        lang = monster.languages[0];
+      }
+
+      // On récupère la traduction dans la langue demandée
+      const translation: MonsterContent = monster.translations.get(lang);
+
+      monster.translations = new Map<string, MonsterContent>();
+      monster.translations.set(lang, translation);
+
+      const message: string = `Monster #${id} found in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: this.mapper.calculAvailablesLanguages(monster),
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while fetching monster #${id}: ${error.message}`;
+      this.logger.error(message);
+      throw new InternalServerErrorException(message);
+    }
   }
 }
