@@ -15,6 +15,8 @@ import { MonsterContent } from "@/resources/monsters/schemas/monster-content.sch
 import { MonstersMapper } from "@/resources/monsters/mappers/monsters.mapper";
 import { CreateMonsterDto } from "@/resources/monsters/dtos/create-monster.dto";
 import { IResponse } from "@/common/dtos/reponse.dto";
+import { SpellFormattedDto } from "@/common/dtos/spell-formatted.dto";
+import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 
 @Injectable()
 export class MonstersService {
@@ -70,6 +72,88 @@ export class MonstersService {
       const message = "Error while validating spells";
       this.logger.error(`${message}: ${error}`);
       throw new InternalServerErrorException(message);
+    }
+  }
+
+  /**
+   * Populate spells in monster translations with full spell data
+   * @param monster Monster entity to populate spells for
+   * @param targetLang The language used when creating the monster
+   * @returns Monster with populated spells
+   */
+  private async populateSpells(monster: any, targetLang: string): Promise<any> {
+    try {
+      // Extract all spell IDs from the monster
+      const spellIds = this.extractSpellIds(monster);
+      
+      if (spellIds.length === 0) {
+        return monster;
+      }
+
+      // Fetch all spells in one query
+      const spells = await this.spellModel
+        .find({
+          _id: { $in: spellIds },
+          deletedAt: null,
+        })
+        .exec();
+
+      // Create a map for quick spell lookup
+      const spellsMap = new Map<string, Spell>();
+      spells.forEach((spell) => {
+        spellsMap.set(spell._id.toString(), spell);
+      });
+
+      // Populate spells in each translation
+      for (const [lang, content] of monster.translations) {
+        if (content.spellcasting && content.spellcasting.length > 0) {
+          for (const spellcasting of content.spellcasting) {
+            if (spellcasting.spells && spellcasting.spells.length > 0) {
+              const populatedSpells: SpellFormattedDto[] = [];
+
+              for (const spellId of spellcasting.spells) {
+                const spell = spellsMap.get(spellId.toString());
+                
+                if (spell) {
+                  // Try to get spell content in the target language first
+                  let spellContent: SpellContent | undefined = spell.translations.get(targetLang);
+                  
+                  // If not available in target language, use the first available language
+                  if (!spellContent && spell.languages.length > 0) {
+                    spellContent = spell.translations.get(spell.languages[0]);
+                  }
+
+                  if (spellContent) {
+                    populatedSpells.push({
+                      srd: spellContent.srd,
+                      name: spellContent.name,
+                      description: spellContent.description,
+                      level: spellContent.level,
+                      castingTime: spellContent.castingTime,
+                      range: spellContent.range,
+                      components: spellContent.components,
+                      duration: spellContent.duration,
+                      school: spellContent.school,
+                      effectType: spellContent.effectType,
+                      damage: spellContent.damage,
+                      healing: spellContent.healing,
+                    });
+                  }
+                }
+              }
+
+              // Replace spell IDs with populated spell data
+              (spellcasting as any).spells = populatedSpells;
+            }
+          }
+        }
+      }
+
+      return monster;
+    } catch (error) {
+      this.logger.error(`Error populating spells: ${error}`);
+      // Return monster without populated spells in case of error
+      return monster;
     }
   }
 
@@ -234,8 +318,11 @@ export class MonstersService {
 
       const start: number = Date.now();
       const createdMonster = new this.monsterModel(monster);
-      const savedMonster = await createdMonster.save();
+      let savedMonster = await createdMonster.save();
       const end: number = Date.now();
+
+      // Populate spells with full data
+      savedMonster = await this.populateSpells(savedMonster, createMonsterDto.lang);
 
       const message: string = `Monster #${savedMonster._id} created in ${end - start}ms`;
       this.logger.log(message);

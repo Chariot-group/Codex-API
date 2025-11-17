@@ -570,12 +570,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-17T14:29:17.756Z"
+            "example": "2025-11-17T15:21:16.117Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-17T14:29:17.756Z"
+            "example": "2025-11-17T15:21:16.117Z"
           },
           "name": {
             "type": "string",
@@ -1141,9 +1141,167 @@
         "type": "object",
         "properties": {}
       },
-      "Spellcasting": {
+      "Map": {
         "type": "object",
         "properties": {}
+      },
+      "SpellFormattedDto": {
+        "type": "object",
+        "properties": {
+          "srd": {
+            "type": "boolean",
+            "example": false,
+            "description": "Whether the spell is from SRD"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fireball",
+            "description": "Name of the spell"
+          },
+          "description": {
+            "type": "string",
+            "example": "A bright streak flashes from your pointing finger to a point you choose within range.",
+            "description": "Description of the spell"
+          },
+          "level": {
+            "type": "number",
+            "example": 3,
+            "description": "Spell level (0 for cantrips)"
+          },
+          "castingTime": {
+            "type": "string",
+            "example": "1 action",
+            "description": "Casting time"
+          },
+          "range": {
+            "type": "string",
+            "example": "150 feet",
+            "description": "Range"
+          },
+          "components": {
+            "example": [
+              "V",
+              "S",
+              "M"
+            ],
+            "description": "Required components",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "duration": {
+            "type": "string",
+            "example": "Instantaneous",
+            "description": "Duration"
+          },
+          "school": {
+            "type": "string",
+            "example": "Evocation",
+            "description": "School of magic"
+          },
+          "effectType": {
+            "type": "number",
+            "example": 1,
+            "description": "Effect type"
+          },
+          "damage": {
+            "type": "string",
+            "example": "8d6",
+            "description": "Damage dice"
+          },
+          "healing": {
+            "type": "string",
+            "example": "Heal 4d8 + spellcasting modifier",
+            "description": "Healing"
+          }
+        },
+        "required": [
+          "srd",
+          "name",
+          "description",
+          "level",
+          "components"
+        ]
+      },
+      "Spellcasting": {
+        "type": "object",
+        "properties": {
+          "ability": {
+            "type": "string",
+            "example": "Intelligence",
+            "description": "Spellcasting ability"
+          },
+          "saveDC": {
+            "type": "number",
+            "example": 14,
+            "description": "Spell save DC"
+          },
+          "attackBonus": {
+            "type": "number",
+            "example": 6,
+            "description": "Spell attack bonus"
+          },
+          "spellSlotsByLevel": {
+            "example": {
+              "1": {
+                "total": 4,
+                "used": 1
+              },
+              "2": {
+                "total": 3,
+                "used": 0
+              },
+              "3": {
+                "total": 3,
+                "used": 1
+              }
+            },
+            "description": "Spell slots by level with total and used counts",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Map"
+              }
+            ]
+          },
+          "totalSlots": {
+            "type": "number",
+            "example": 14,
+            "default": 0,
+            "description": "Total spell slots available"
+          },
+          "spells": {
+            "description": "Array of populated spell objects with full details (in API responses). Note: stored as ObjectIds in database.",
+            "example": [
+              {
+                "srd": false,
+                "name": "Fireball",
+                "description": "A bright streak flashes from your pointing finger to a point you choose within range.",
+                "level": 3,
+                "castingTime": "1 action",
+                "range": "150 feet",
+                "components": [
+                  "V",
+                  "S",
+                  "M"
+                ],
+                "duration": "Instantaneous",
+                "school": "Evocation",
+                "effectType": 1,
+                "damage": "8d6"
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpellFormattedDto"
+            }
+          }
+        },
+        "required": [
+          "attackBonus",
+          "totalSlots",
+          "spells"
+        ]
       },
       "Actions": {
         "type": "object",
@@ -1172,12 +1330,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-17T14:29:18.311Z"
+            "example": "2025-11-17T15:21:16.652Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-17T14:29:18.311Z"
+            "example": "2025-11-17T15:21:16.652Z"
           },
           "name": {
             "type": "string",
