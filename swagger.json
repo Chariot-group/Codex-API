@@ -451,6 +451,67 @@
         "tags": [
           "Monsters"
         ]
+      },
+      "post": {
+        "operationId": "MonstersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMonsterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Monster created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Monster"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation DTO failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "example": {
+                        "message": [
+                          "monsterContent.name must be a string"
+                        ],
+                        "statusCode": 400,
+                        "error": "Bad Request"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a new monster",
+        "tags": [
+          "Monsters"
+        ]
       }
     },
     "/monsters/{id}": {
@@ -549,12 +610,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-13T07:32:03.191Z"
+            "example": "2025-11-18T07:18:48.008Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-13T07:32:03.191Z"
+            "example": "2025-11-18T07:18:48.008Z"
           },
           "name": {
             "type": "string",
@@ -1120,9 +1181,167 @@
         "type": "object",
         "properties": {}
       },
-      "Spellcasting": {
+      "Map": {
         "type": "object",
         "properties": {}
+      },
+      "SpellFormattedDto": {
+        "type": "object",
+        "properties": {
+          "srd": {
+            "type": "boolean",
+            "example": false,
+            "description": "Whether the spell is from SRD"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fireball",
+            "description": "Name of the spell"
+          },
+          "description": {
+            "type": "string",
+            "example": "A bright streak flashes from your pointing finger to a point you choose within range.",
+            "description": "Description of the spell"
+          },
+          "level": {
+            "type": "number",
+            "example": 3,
+            "description": "Spell level (0 for cantrips)"
+          },
+          "castingTime": {
+            "type": "string",
+            "example": "1 action",
+            "description": "Casting time"
+          },
+          "range": {
+            "type": "string",
+            "example": "150 feet",
+            "description": "Range"
+          },
+          "components": {
+            "example": [
+              "V",
+              "S",
+              "M"
+            ],
+            "description": "Required components",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "duration": {
+            "type": "string",
+            "example": "Instantaneous",
+            "description": "Duration"
+          },
+          "school": {
+            "type": "string",
+            "example": "Evocation",
+            "description": "School of magic"
+          },
+          "effectType": {
+            "type": "number",
+            "example": 1,
+            "description": "Effect type"
+          },
+          "damage": {
+            "type": "string",
+            "example": "8d6",
+            "description": "Damage dice"
+          },
+          "healing": {
+            "type": "string",
+            "example": "Heal 4d8 + spellcasting modifier",
+            "description": "Healing"
+          }
+        },
+        "required": [
+          "srd",
+          "name",
+          "description",
+          "level",
+          "components"
+        ]
+      },
+      "Spellcasting": {
+        "type": "object",
+        "properties": {
+          "ability": {
+            "type": "string",
+            "example": "Intelligence",
+            "description": "Spellcasting ability"
+          },
+          "saveDC": {
+            "type": "number",
+            "example": 14,
+            "description": "Spell save DC"
+          },
+          "attackBonus": {
+            "type": "number",
+            "example": 6,
+            "description": "Spell attack bonus"
+          },
+          "spellSlotsByLevel": {
+            "example": {
+              "1": {
+                "total": 4,
+                "used": 1
+              },
+              "2": {
+                "total": 3,
+                "used": 0
+              },
+              "3": {
+                "total": 3,
+                "used": 1
+              }
+            },
+            "description": "Spell slots by level with total and used counts",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Map"
+              }
+            ]
+          },
+          "totalSlots": {
+            "type": "number",
+            "example": 14,
+            "default": 0,
+            "description": "Total spell slots available"
+          },
+          "spells": {
+            "description": "Array of populated spell objects with full details (in API responses). Note: stored as ObjectIds in database.",
+            "example": [
+              {
+                "srd": false,
+                "name": "Fireball",
+                "description": "A bright streak flashes from your pointing finger to a point you choose within range.",
+                "level": 3,
+                "castingTime": "1 action",
+                "range": "150 feet",
+                "components": [
+                  "V",
+                  "S",
+                  "M"
+                ],
+                "duration": "Instantaneous",
+                "school": "Evocation",
+                "effectType": 1,
+                "damage": "8d6"
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpellFormattedDto"
+            }
+          }
+        },
+        "required": [
+          "attackBonus",
+          "totalSlots",
+          "spells"
+        ]
       },
       "Actions": {
         "type": "object",
@@ -1151,12 +1370,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-13T07:32:03.475Z"
+            "example": "2025-11-18T07:18:48.570Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-13T07:32:03.475Z"
+            "example": "2025-11-18T07:18:48.570Z"
           },
           "name": {
             "type": "string",
@@ -1237,6 +1456,793 @@
           "languages",
           "translations",
           "deletedAt"
+        ]
+      },
+      "CreateSpeedDto": {
+        "type": "object",
+        "properties": {
+          "walk": {
+            "type": "number",
+            "example": 30
+          },
+          "climb": {
+            "type": "number",
+            "example": 20
+          },
+          "swim": {
+            "type": "number",
+            "example": 15
+          },
+          "fly": {
+            "type": "number",
+            "example": 60
+          },
+          "burrow": {
+            "type": "number",
+            "example": 10
+          }
+        }
+      },
+      "CreateAbilityScoresDto": {
+        "type": "object",
+        "properties": {
+          "strength": {
+            "type": "number",
+            "example": 9,
+            "default": 10,
+            "description": "Strength score"
+          },
+          "dexterity": {
+            "type": "number",
+            "example": 14,
+            "default": 10,
+            "description": "Dexterity score"
+          },
+          "constitution": {
+            "type": "number",
+            "example": 11,
+            "default": 10,
+            "description": "Constitution score"
+          },
+          "intelligence": {
+            "type": "number",
+            "example": 17,
+            "default": 10,
+            "description": "Intelligence score (primary for Mage)"
+          },
+          "wisdom": {
+            "type": "number",
+            "example": 12,
+            "default": 10,
+            "description": "Wisdom score"
+          },
+          "charisma": {
+            "type": "number",
+            "example": 11,
+            "default": 10,
+            "description": "Charisma score"
+          }
+        },
+        "required": [
+          "strength",
+          "dexterity",
+          "constitution",
+          "intelligence",
+          "wisdom",
+          "charisma"
+        ]
+      },
+      "CreateSavingThrowsDto": {
+        "type": "object",
+        "properties": {
+          "strength": {
+            "type": "number",
+            "example": -1,
+            "default": 0,
+            "description": "Strength saving throw modifier"
+          },
+          "dexterity": {
+            "type": "number",
+            "example": 2,
+            "default": 0,
+            "description": "Dexterity saving throw modifier"
+          },
+          "constitution": {
+            "type": "number",
+            "example": 0,
+            "default": 0,
+            "description": "Constitution saving throw modifier"
+          },
+          "intelligence": {
+            "type": "number",
+            "example": 6,
+            "default": 0,
+            "description": "Intelligence saving throw modifier (proficient)"
+          },
+          "wisdom": {
+            "type": "number",
+            "example": 4,
+            "default": 0,
+            "description": "Wisdom saving throw modifier (proficient)"
+          },
+          "charisma": {
+            "type": "number",
+            "example": 0,
+            "default": 0,
+            "description": "Charisma saving throw modifier"
+          }
+        },
+        "required": [
+          "strength",
+          "dexterity",
+          "constitution",
+          "intelligence",
+          "wisdom",
+          "charisma"
+        ]
+      },
+      "CreateSkillsDto": {
+        "type": "object",
+        "properties": {
+          "athletics": {
+            "type": "number",
+            "example": 3,
+            "default": 0
+          },
+          "acrobatics": {
+            "type": "number",
+            "example": 2,
+            "default": 0
+          },
+          "sleightHand": {
+            "type": "number",
+            "example": 3,
+            "default": 0
+          },
+          "stealth": {
+            "type": "number",
+            "example": -1,
+            "default": 0
+          },
+          "arcana": {
+            "type": "number",
+            "example": 6,
+            "default": 0,
+            "description": "Arcana skill (proficient for Mage)"
+          },
+          "history": {
+            "type": "number",
+            "example": 6,
+            "default": 0,
+            "description": "History skill (proficient for Mage)"
+          },
+          "investigation": {
+            "type": "number",
+            "example": 2,
+            "default": 0
+          },
+          "nature": {
+            "type": "number",
+            "example": 0,
+            "default": 0
+          },
+          "religion": {
+            "type": "number",
+            "example": 7,
+            "default": 0
+          },
+          "animalHandling": {
+            "type": "number",
+            "example": 3,
+            "default": 0
+          },
+          "insight": {
+            "type": "number",
+            "example": -1,
+            "default": 0
+          },
+          "medicine": {
+            "type": "number",
+            "example": 1,
+            "default": 0
+          },
+          "perception": {
+            "type": "number",
+            "example": 7,
+            "default": 0
+          },
+          "survival": {
+            "type": "number",
+            "example": 2,
+            "default": 0
+          },
+          "deception": {
+            "type": "number",
+            "example": 2,
+            "default": 0
+          },
+          "intimidation": {
+            "type": "number",
+            "example": 2,
+            "default": 0
+          },
+          "performance": {
+            "type": "number",
+            "example": 1,
+            "default": 0
+          },
+          "persuasion": {
+            "type": "number",
+            "example": 2,
+            "default": 0
+          }
+        },
+        "required": [
+          "athletics",
+          "acrobatics",
+          "sleightHand",
+          "stealth",
+          "arcana",
+          "history",
+          "investigation",
+          "nature",
+          "religion",
+          "animalHandling",
+          "insight",
+          "medicine",
+          "perception",
+          "survival",
+          "deception",
+          "intimidation",
+          "performance",
+          "persuasion"
+        ]
+      },
+      "CreateSenseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "darkvision"
+          },
+          "value": {
+            "type": "number",
+            "example": 60
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ]
+      },
+      "CreateStatsDto": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "number",
+            "example": 3,
+            "default": 0,
+            "description": "Size: 0=Tiny, 1=Small, 2=Medium, 3=Large, 4=Huge, 5=Gargantuan"
+          },
+          "maxHitPoints": {
+            "type": "number",
+            "example": 40,
+            "default": 0,
+            "description": "Maximum hit points"
+          },
+          "currentHitPoints": {
+            "type": "number",
+            "example": 40,
+            "description": "Current hit points, defaults to maxHitPoints"
+          },
+          "tempHitPoints": {
+            "type": "number",
+            "example": 0,
+            "default": 0,
+            "description": "Temporary hit points"
+          },
+          "armorClass": {
+            "type": "number",
+            "example": 12,
+            "default": 10,
+            "description": "Armor Class (with Mage Armor: 15)"
+          },
+          "speed": {
+            "$ref": "#/components/schemas/CreateSpeedDto"
+          },
+          "abilityScores": {
+            "$ref": "#/components/schemas/CreateAbilityScoresDto"
+          },
+          "languages": {
+            "example": [
+              "Common",
+              "Draconic",
+              "Dwarvish",
+              "Elvish"
+            ],
+            "default": [],
+            "description": "Languages known by the creature",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "passivePerception": {
+            "type": "number",
+            "example": 11,
+            "default": 0,
+            "description": "Passive Perception score"
+          },
+          "savingThrows": {
+            "$ref": "#/components/schemas/CreateSavingThrowsDto"
+          },
+          "skills": {
+            "$ref": "#/components/schemas/CreateSkillsDto"
+          },
+          "senses": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateSenseDto"
+            }
+          }
+        },
+        "required": [
+          "size",
+          "maxHitPoints",
+          "tempHitPoints",
+          "armorClass",
+          "languages",
+          "passivePerception",
+          "senses"
+        ]
+      },
+      "CreateAffinitiesDto": {
+        "type": "object",
+        "properties": {
+          "resistances": {
+            "example": [
+              "fire",
+              "cold"
+            ],
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "immunities": {
+            "example": [
+              "poison",
+              "psychic"
+            ],
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "vulnerabilities": {
+            "example": [
+              "lightning"
+            ],
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "conditionImmunities": {
+            "example": [
+              "charmed",
+              "frightened"
+            ],
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "resistances",
+          "immunities",
+          "vulnerabilities",
+          "conditionImmunities"
+        ]
+      },
+      "CreateAbilityDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Spellcasting",
+            "description": "Name of the special ability"
+          },
+          "description": {
+            "type": "string",
+            "example": "The mage is a 9th-level spellcaster. Its spellcasting ability is Intelligence (spell save DC 14, +6 to hit with spell attacks). The mage has the following wizard spells prepared: Cantrips (at will): fire bolt, light, mage hand, prestidigitation. 1st level (4 slots): detect magic, mage armor, magic missile, shield. 2nd level (3 slots): misty step, suggestion. 3rd level (3 slots): counterspell, fireball, fly. 4th level (3 slots): greater invisibility, ice storm. 5th level (1 slot): cone of cold.",
+            "description": "Description of the ability"
+          }
+        },
+        "required": [
+          "name",
+          "description"
+        ]
+      },
+      "CreateSpellcastingDto": {
+        "type": "object",
+        "properties": {
+          "ability": {
+            "type": "string",
+            "example": "Intelligence",
+            "description": "Spellcasting ability"
+          },
+          "saveDC": {
+            "type": "number",
+            "example": 14,
+            "description": "Spell save DC"
+          },
+          "attackBonus": {
+            "type": "number",
+            "example": 6,
+            "description": "Spell attack bonus"
+          },
+          "spellSlotsByLevel": {
+            "type": "object",
+            "example": {
+              "1": {
+                "total": 4,
+                "used": 1
+              },
+              "2": {
+                "total": 3,
+                "used": 0
+              },
+              "3": {
+                "total": 3,
+                "used": 1
+              },
+              "4": {
+                "total": 3,
+                "used": 0
+              },
+              "5": {
+                "total": 1,
+                "used": 0
+              }
+            },
+            "description": "Spell slots by level (will be converted to Map internally)"
+          },
+          "totalSlots": {
+            "type": "number",
+            "example": 14,
+            "default": 0,
+            "description": "Total spell slots available"
+          },
+          "spells": {
+            "example": [
+              "fire-bolt",
+              "mage-armor",
+              "magic-missile",
+              "shield",
+              "misty-step",
+              "counterspell",
+              "fireball",
+              "greater-invisibility",
+              "cone-of-cold"
+            ],
+            "default": [],
+            "description": "Array of spell IDs or references",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "attackBonus",
+          "totalSlots",
+          "spells"
+        ]
+      },
+      "CreateDamageDto": {
+        "type": "object",
+        "properties": {
+          "dice": {
+            "type": "string",
+            "example": "1d8+3"
+          },
+          "type": {
+            "type": "string",
+            "example": "slashing"
+          }
+        }
+      },
+      "CreateSaveDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "dex",
+            "description": "str, dex, con, int, wis, cha"
+          },
+          "dc": {
+            "type": "number",
+            "example": 15
+          },
+          "successType": {
+            "type": "string",
+            "example": "half"
+          }
+        },
+        "required": [
+          "type",
+          "dc"
+        ]
+      },
+      "CreateUsageDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "per day",
+            "description": "at will, per day, recharge, etc."
+          },
+          "times": {
+            "type": "number",
+            "example": 3
+          },
+          "dice": {
+            "type": "string",
+            "example": "1d6"
+          },
+          "minValue": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "CreateActionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Longsword"
+          },
+          "type": {
+            "type": "string",
+            "example": "melee"
+          },
+          "attackBonus": {
+            "type": "number",
+            "example": 5
+          },
+          "damage": {
+            "$ref": "#/components/schemas/CreateDamageDto"
+          },
+          "range": {
+            "type": "string",
+            "example": "5 ft."
+          },
+          "save": {
+            "$ref": "#/components/schemas/CreateSaveDto"
+          },
+          "description": {
+            "type": "string",
+            "example": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target."
+          },
+          "usage": {
+            "$ref": "#/components/schemas/CreateUsageDto"
+          },
+          "legendaryActionCost": {
+            "type": "number",
+            "example": 2
+          }
+        }
+      },
+      "CreateActionsDto": {
+        "type": "object",
+        "properties": {
+          "standard": {
+            "default": [],
+            "example": [
+              {
+                "name": "Dagger",
+                "type": "melee",
+                "attackBonus": 5,
+                "damage": {
+                  "dice": "1d4+2",
+                  "type": "piercing"
+                },
+                "range": "5 ft. or range 20/60 ft.",
+                "description": "Melee or Ranged Weapon Attack: +5 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d4 + 2) piercing damage."
+              }
+            ],
+            "description": "Standard actions available to the creature",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateActionDto"
+            }
+          },
+          "legendary": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateActionDto"
+            }
+          },
+          "legendaryActionsPerDay": {
+            "type": "number",
+            "example": 3
+          },
+          "lair": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateActionDto"
+            }
+          },
+          "reactions": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateActionDto"
+            }
+          },
+          "bonus": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateActionDto"
+            }
+          }
+        },
+        "required": [
+          "standard",
+          "legendary",
+          "lair",
+          "reactions",
+          "bonus"
+        ]
+      },
+      "CreateChallengeDto": {
+        "type": "object",
+        "properties": {
+          "challengeRating": {
+            "type": "number",
+            "example": 6,
+            "description": "Challenge Rating"
+          },
+          "experiencePoints": {
+            "type": "number",
+            "example": 2300,
+            "description": "Experience points awarded"
+          }
+        }
+      },
+      "CreateProfileDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "humanoid"
+          },
+          "subtype": {
+            "type": "string",
+            "example": "goblinoid"
+          },
+          "alignment": {
+            "type": "string",
+            "example": "neutral evil"
+          }
+        }
+      },
+      "CreateMonsterContentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Mage",
+            "description": "Name of the monster"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/CreateStatsDto"
+          },
+          "affinities": {
+            "$ref": "#/components/schemas/CreateAffinitiesDto"
+          },
+          "abilities": {
+            "default": [],
+            "example": [
+              {
+                "name": "Fey Ancestry",
+                "description": "The creature has advantage on saving throws against being charmed, and magic can't put it to sleep."
+              },
+              {
+                "name": "Innate Spellcasting",
+                "description": "The creature's innate spellcasting ability is Charisma (spell save DC 12). It can innately cast the following spells, requiring no material components: At will: dancing lights, 1/day each: darkness, faerie fire."
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateAbilityDto"
+            }
+          },
+          "spellcasting": {
+            "default": [],
+            "example": [
+              {
+                "ability": "Intelligence",
+                "saveDC": 14,
+                "attackBonus": 6,
+                "spellSlotsByLevel": {
+                  "1": {
+                    "total": 4,
+                    "used": 1
+                  },
+                  "2": {
+                    "total": 3,
+                    "used": 0
+                  },
+                  "3": {
+                    "total": 3,
+                    "used": 1
+                  },
+                  "4": {
+                    "total": 3,
+                    "used": 0
+                  },
+                  "5": {
+                    "total": 1,
+                    "used": 0
+                  }
+                },
+                "totalSlots": 14,
+                "spells": [
+                  "507f1f77bcf86cd799439011",
+                  "507f1f77bcf86cd799439012"
+                ]
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateSpellcastingDto"
+            }
+          },
+          "actions": {
+            "$ref": "#/components/schemas/CreateActionsDto"
+          },
+          "challenge": {
+            "$ref": "#/components/schemas/CreateChallengeDto"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/CreateProfileDto"
+          }
+        },
+        "required": [
+          "name",
+          "abilities",
+          "spellcasting"
+        ]
+      },
+      "CreateMonsterDto": {
+        "type": "object",
+        "properties": {
+          "lang": {
+            "type": "string",
+            "example": "en"
+          },
+          "monsterContent": {
+            "$ref": "#/components/schemas/CreateMonsterContentDto"
+          }
+        },
+        "required": [
+          "lang",
+          "monsterContent"
         ]
       }
     }
