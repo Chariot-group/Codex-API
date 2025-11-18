@@ -1,20 +1,6 @@
 {
   "openapi": "3.0.0",
   "paths": {
-    "/": {
-      "get": {
-        "operationId": "AppController_getHello",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "App"
-        ]
-      }
-    },
     "/spells": {
       "get": {
         "operationId": "SpellsController_findAll",
@@ -142,22 +128,11 @@
             }
           },
           "400": {
-            "description": "Validation DTO failed",
+            "description": "Validation error",
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "example": {
-                        "message": [
-                          "spellContent.description must be a string",
-                          "spellContent.level must be a number conforming to the specified constraints"
-                        ],
-                        "statusCode": 400,
-                        "error": "Bad Request"
-                      }
-                    }
-                  ]
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
               }
             }
@@ -278,21 +253,11 @@
             }
           },
           "400": {
-            "description": "Validation DTO failed",
+            "description": "Validation error",
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "example": {
-                        "message": [
-                          "tag must be a number conforming to the specified constraints"
-                        ],
-                        "statusCode": 400,
-                        "error": "Bad Request"
-                      }
-                    }
-                  ]
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 }
               }
             }
@@ -509,7 +474,7 @@
             }
           }
         },
-        "summary": "Create a new spell",
+        "summary": "Create a new monster",
         "tags": [
           "Monsters"
         ]
@@ -637,7 +602,11 @@
     "contact": {}
   },
   "tags": [],
-  "servers": [],
+  "servers": [
+    {
+      "url": "http://localhost:9000"
+    }
+  ],
   "components": {
     "securitySchemes": {
       "bearer": {
@@ -662,12 +631,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T09:08:12.315Z"
+            "example": "2025-11-18T10:53:15.500Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T09:08:12.315Z"
+            "example": "2025-11-18T10:53:15.500Z"
           },
           "name": {
             "type": "string",
@@ -847,6 +816,61 @@
         },
         "required": [
           "tag"
+        ]
+      },
+      "InvalidParamDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "spellContent.level"
+          },
+          "reason": {
+            "type": "string",
+            "example": "must be a number conforming to the specified constraints"
+          }
+        },
+        "required": [
+          "name",
+          "reason"
+        ]
+      },
+      "ProblemDetailsDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "https://httpstatuses.io/400"
+          },
+          "title": {
+            "type": "string",
+            "example": "Bad request"
+          },
+          "status": {
+            "type": "number",
+            "example": 400
+          },
+          "instance": {
+            "type": "string",
+            "example": "/spells"
+          },
+          "detail": {
+            "type": "string",
+            "example": "Validation failed"
+          },
+          "invalid-params": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvalidParamDto"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "instance",
+          "detail"
         ]
       },
       "CreateSpellContentDto": {
@@ -1422,12 +1446,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T09:08:12.959Z"
+            "example": "2025-11-18T10:53:16.097Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T09:08:12.959Z"
+            "example": "2025-11-18T10:53:16.097Z"
           },
           "name": {
             "type": "string",

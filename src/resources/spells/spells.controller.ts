@@ -10,6 +10,7 @@ import { langParam } from "@/resources/spells/dtos/find-one.dto";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 import { UpdateSpellDto } from "@/resources/spells/dtos/update-spell.dto";
 import { CreateSpellDto } from "@/resources/spells/dtos/create-spell.dto";
+import { ProblemDetailsDto } from "@/common/dtos/errors.dto";
 
 @ApiExtraModels(Spell, SpellContent, IResponse, IPaginatedResponse)
 @Controller("spells")
@@ -118,18 +119,8 @@ export class SpellsController {
   })
   @ApiResponse({
     status: 400,
-    description: "Validation DTO failed",
-    schema: {
-      allOf: [
-        {
-          example: {
-            message: ["tag must be a number conforming to the specified constraints"],
-            statusCode: 400,
-            error: "Bad Request",
-          },
-        },
-      ],
-    },
+    description: "Validation error",
+    type: ProblemDetailsDto,
   })
   @ApiResponse({ status: 404, description: "Spell #ID not found" })
   @ApiResponse({ status: 410, description: "Spell #ID has been deleted" })
@@ -145,12 +136,6 @@ export class SpellsController {
         this.logger.error(message);
         throw new ForbiddenException(message);
       }
-    }
-
-    if (oldSpell.data.translations.has("srd")) {
-      const message = `Spell #${id} is in srd and cannot be modified`;
-      this.logger.error(message);
-      throw new ForbiddenException(message);
     }
 
     return this.spellsService.update(id, oldSpell.data, updateData);
@@ -173,21 +158,8 @@ export class SpellsController {
   })
   @ApiResponse({
     status: 400,
-    description: "Validation DTO failed",
-    schema: {
-      allOf: [
-        {
-          example: {
-            message: [
-              "spellContent.description must be a string",
-              "spellContent.level must be a number conforming to the specified constraints",
-            ],
-            statusCode: 400,
-            error: "Bad Request",
-          },
-        },
-      ],
-    },
+    description: "Validation error",
+    type: ProblemDetailsDto,
   })
   async create(@Body() spellDto: CreateSpellDto): Promise<IResponse<Spell>> {
     return this.spellsService.create(spellDto);

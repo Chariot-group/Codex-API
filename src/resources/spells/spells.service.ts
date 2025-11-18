@@ -98,32 +98,6 @@ export class SpellsService {
         .exec();
       const end = Date.now();
 
-      // Si on cherche par nom dans toutes les langues
-      if (name.length > 0 && lang.length == 0) {
-        const decodedName: string = decodeURIComponent(name).toLowerCase();
-
-        spells = spells.map((spell) => {
-          let filteredTranslations: Map<string, SpellContent> = new Map();
-
-          // On parcours toutes les langues
-          for (const language of spell.languages) {
-            const translation: SpellContent = spell.translations.get(language);
-
-            // Si le nom renseigné dans cette langue match
-            if (translation && translation.name && translation.name.toLowerCase().includes(decodedName.toLowerCase())) {
-              filteredTranslations.set(language, translation);
-            }
-          }
-          // On remplace par les traduction qui on un nom qui match avec la recherche
-          spell.translations = filteredTranslations;
-
-          this.logger.log(`Filtered translations: ${JSON.stringify(filteredTranslations)}`);
-          return spell;
-        }) as Spell[];
-      }
-
-      this.logger.log(JSON.stringify(spells));
-
       this.logger.log(`Spells found in ${end - start}ms`);
 
       return {
