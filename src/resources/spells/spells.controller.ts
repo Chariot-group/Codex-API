@@ -96,9 +96,13 @@ export class SpellsController {
       ],
     },
   })
-  @ApiResponse({ status: 404, description: "Spell #ID not found" })
-  @ApiResponse({ status: 400, description: "Error while fetching spell #ID: Id is not a valid mongoose id" })
-  @ApiResponse({ status: 410, description: "Spell #ID has been deleted" })
+  @ApiResponse({ status: 404, description: "Spell #ID not found", type: ProblemDetailsDto })
+  @ApiResponse({
+    status: 400,
+    description: "Error while fetching spell #ID: Id is not a valid mongoose id",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({ status: 410, description: "Spell #ID has been deleted", type: ProblemDetailsDto })
   async findOne(
     @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
     @Query() query: langParam,
@@ -134,8 +138,8 @@ export class SpellsController {
     description: "Validation error",
     type: ProblemDetailsDto,
   })
-  @ApiResponse({ status: 404, description: "Spell #ID not found" })
-  @ApiResponse({ status: 410, description: "Spell #ID has been deleted" })
+  @ApiResponse({ status: 404, description: "Spell #ID not found", type: ProblemDetailsDto })
+  @ApiResponse({ status: 410, description: "Spell #ID has been deleted", type: ProblemDetailsDto })
   async update(
     @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
     @Body() updateData: UpdateSpellDto,
@@ -199,11 +203,26 @@ export class SpellsController {
       ],
     },
   })
-  @ApiResponse({ status: 404, description: "Spell #ID not found" })
-  @ApiResponse({ status: 400, description: "Error while fetching spell #ID: Id is not a valid mongoose id" })
-  @ApiResponse({ status: 410, description: "Spell #ID has been deleted" })
+  @ApiResponse({ status: 404, description: "Spell #ID not found", type: ProblemDetailsDto })
+  @ApiResponse({
+    status: 400,
+    description: "Error while fetching spell #ID: Id is not a valid mongoose id",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({ status: 410, description: "Spell #ID has been deleted", type: ProblemDetailsDto })
   async delete(@Param("id", ParseMongoIdPipe) id: Types.ObjectId): Promise<IResponse<Spell>> {
     const spell: IResponse<Spell> = await this.validateResource(id, "en");
+
+    // Vérifier si au moins une traduction a srd: true
+    const hasSrdTranslation = Array.from(spell.data.translations.values()).some(
+      (translation) => translation.srd === true,
+    );
+
+    if (hasSrdTranslation) {
+      const message = `Cannot delete spell #${id}: it has at least one SRD translation`;
+      this.logger.error(message);
+      throw new ForbiddenException(message);
+    }
 
     return this.spellsService.delete(id, spell.data);
   }
