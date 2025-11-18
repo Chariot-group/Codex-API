@@ -597,6 +597,9 @@
               }
             }
           },
+          "403": {
+            "description": "Cannot update monster #ID: it has at least one SRD translation"
+          },
           "404": {
             "description": "Spell #ID not found"
           },
@@ -647,12 +650,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T13:36:46.470Z"
+            "example": "2025-11-18T13:50:15.188Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T13:36:46.470Z"
+            "example": "2025-11-18T13:50:15.188Z"
           },
           "name": {
             "type": "string",
@@ -1462,12 +1465,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T13:36:47.027Z"
+            "example": "2025-11-18T13:50:15.745Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T13:36:47.027Z"
+            "example": "2025-11-18T13:50:15.745Z"
           },
           "name": {
             "type": "string",

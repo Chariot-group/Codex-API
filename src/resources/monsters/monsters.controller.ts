@@ -166,6 +166,10 @@ export class MonstersController {
     description: "Validation error",
     type: ProblemDetailsDto,
   })
+  @ApiResponse({
+    status: 403,
+    description: "Cannot update monster #ID: it has at least one SRD translation",
+  })
   @ApiResponse({ status: 404, description: "Spell #ID not found" })
   @ApiResponse({ status: 410, description: "Spell #ID has been deleted" })
   async update(
@@ -173,6 +177,16 @@ export class MonstersController {
     @Body() updateData: UpdateMonsterDto,
   ): Promise<IResponse<Monster>> {
     const oldMonster: IResponse<Monster> = await this.validateResource(id, "en");
+
+    const hasSrdTranslation = Array.from(oldMonster.data.translations.values()).some(
+      (translation) => translation.srd === true,
+    );
+
+    if (hasSrdTranslation) {
+      const message = `Cannot update monster #${id}: it has at least one SRD translation`;
+      this.logger.error(message);
+      throw new ForbiddenException(message);
+    }
 
     for (const [lang, translation] of oldMonster.data.translations) {
       if (translation.srd) {
