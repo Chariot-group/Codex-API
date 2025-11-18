@@ -1,4 +1,16 @@
-import { Controller, Get, BadRequestException, Logger, Query, Param, Patch, Body, Post, Delete, ForbiddenException } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  BadRequestException,
+  Logger,
+  Query,
+  Param,
+  Patch,
+  Body,
+  Post,
+  Delete,
+  ForbiddenException,
+} from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiOkResponse, ApiExtraModels, getSchemaPath, ApiParam } from "@nestjs/swagger";
 import { SpellsService } from "@/resources/spells/spells.service";
 import { Types } from "mongoose";
@@ -61,7 +73,7 @@ export class SpellsController {
     name: "id",
     type: String,
     required: true,
-    description: "The ID of the spell to update",
+    description: "The ID of the spell to get",
     example: "507f1f77bcf86cd799439011",
   })
   @ApiParam({
@@ -101,7 +113,7 @@ export class SpellsController {
     name: "id",
     type: String,
     required: true,
-    description: "The ID of the spell to retrieve",
+    description: "The ID of the spell to update",
     example: "507f1f77bcf86cd799439011",
   })
   @ApiOkResponse({

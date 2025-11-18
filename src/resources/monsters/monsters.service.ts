@@ -18,6 +18,7 @@ import { CreateMonsterDto } from "@/resources/monsters/dtos/create-monster.dto";
 import { IResponse } from "@/common/dtos/reponse.dto";
 import { SpellFormattedDto } from "@/common/dtos/spell-formatted.dto";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
+import { UpdateMonsterDto } from "@/resources/monsters/dtos/update-monster.dto";
 
 @Injectable()
 export class MonstersService {
@@ -385,6 +386,28 @@ export class MonstersService {
     } catch (error) {
       if (error instanceof HttpException) throw error;
       const message: string = "An error occurred while creating monster";
+      this.logger.error(`${message}: ${error}`);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  async update(id: Types.ObjectId, oldMonster: Monster, updateData: UpdateMonsterDto): Promise<IResponse<Monster>> {
+    try {
+      const start: number = Date.now();
+      await this.spellModel.updateOne({ _id: id }, updateData).exec();
+      oldMonster.tag = updateData.tag;
+      const end: number = Date.now();
+
+      const message: string = `Spell #${id} updated in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: oldMonster,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while updating monster #${id}`;
       this.logger.error(`${message}: ${error}`);
       throw new InternalServerErrorException(message);
     }

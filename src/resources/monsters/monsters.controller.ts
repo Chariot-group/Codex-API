@@ -1,6 +1,17 @@
 import { MonstersService } from "@/resources/monsters/monsters.service";
 import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, getSchemaPath } from "@nestjs/swagger";
-import { BadRequestException, Controller, Get, Logger, Param, Query, Body, Post } from "@nestjs/common";
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Query,
+  Body,
+  Post,
+  Patch,
+  ForbiddenException,
+} from "@nestjs/common";
 import { IPaginatedResponse, IResponse } from "@/common/dtos/reponse.dto";
 import { Monster } from "@/resources/monsters/schemas/monster.schema";
 import { MonsterContent } from "@/resources/monsters/schemas/monster-content.schema";
@@ -9,6 +20,8 @@ import { CreateMonsterDto } from "@/resources/monsters/dtos/create-monster.dto";
 import { ParseMongoIdPipe } from "@/common/pipes/parse-mong-id.pipe";
 import { Types } from "mongoose";
 import { langParam } from "@/resources/monsters/dtos/find-one.dto";
+import { ProblemDetailsDto } from "@/common/dtos/errors.dto";
+import { UpdateMonsterDto } from "@/resources/monsters/dtos/update-monster.dto";
 
 @ApiExtraModels(Monster, MonsterContent, IResponse, IPaginatedResponse)
 @Controller("monsters")
@@ -124,5 +137,51 @@ export class MonstersController {
   })
   async create(@Body() monsterDto: CreateMonsterDto): Promise<IResponse<Monster>> {
     return this.monstersService.create(monsterDto);
+  }
+
+  @Patch(":id")
+  @ApiOperation({ summary: "Update a monster by ID" })
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the monster to update",
+    example: "507f1f77bcf86cd799439011",
+  })
+  @ApiOkResponse({
+    description: "Monster updated successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(IResponse) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(Monster) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Validation error",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({ status: 404, description: "Spell #ID not found" })
+  @ApiResponse({ status: 410, description: "Spell #ID has been deleted" })
+  async update(
+    @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
+    @Body() updateData: UpdateMonsterDto,
+  ): Promise<IResponse<Monster>> {
+    const oldMonster: IResponse<Monster> = await this.validateResource(id, "en");
+
+    for (const [lang, translation] of oldMonster.data.translations) {
+      if (translation.srd) {
+        const message = `Monster #${id} is in srd and cannot be modified`;
+        this.logger.error(message);
+        throw new ForbiddenException(message);
+      }
+    }
+
+    return this.monstersService.update(id, oldMonster.data, updateData);
   }
 }

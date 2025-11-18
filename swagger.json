@@ -152,7 +152,7 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "The ID of the spell to update",
+            "description": "The ID of the spell to get",
             "schema": {
               "example": "507f1f77bcf86cd799439011",
               "type": "string"
@@ -213,7 +213,7 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "The ID of the spell to retrieve",
+            "description": "The ID of the spell to update",
             "schema": {
               "example": "507f1f77bcf86cd799439011",
               "type": "string"
@@ -540,6 +540,74 @@
         "tags": [
           "Monsters"
         ]
+      },
+      "patch": {
+        "operationId": "MonstersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the monster to update",
+            "schema": {
+              "example": "507f1f77bcf86cd799439011",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMonsterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Monster updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Monster"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Spell #ID not found"
+          },
+          "410": {
+            "description": "Spell #ID has been deleted"
+          }
+        },
+        "summary": "Update a monster by ID",
+        "tags": [
+          "Monsters"
+        ]
       }
     }
   },
@@ -579,12 +647,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T08:50:27.180Z"
+            "example": "2025-11-18T13:36:46.470Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T08:50:27.180Z"
+            "example": "2025-11-18T13:36:46.470Z"
           },
           "name": {
             "type": "string",
@@ -1394,12 +1462,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T08:50:27.743Z"
+            "example": "2025-11-18T13:36:47.027Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T08:50:27.743Z"
+            "example": "2025-11-18T13:36:47.027Z"
           },
           "name": {
             "type": "string",
@@ -2267,6 +2335,23 @@
         "required": [
           "lang",
           "monsterContent"
+        ]
+      },
+      "UpdateMonsterDto": {
+        "type": "object",
+        "properties": {
+          "tag": {
+            "type": "number",
+            "example": 1,
+            "description": "0: Homebrew, 1: Certified by Chariot",
+            "enum": [
+              0,
+              1
+            ]
+          }
+        },
+        "required": [
+          "tag"
         ]
       }
     }
