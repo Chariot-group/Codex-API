@@ -17,7 +17,7 @@ async function bootstrap() {
   app.useGlobalFilters(new ProblemDetailsFilter());
 
   const document = setupSwagger(app);
-  SwaggerModule.setup("swagger", app, document);
+  SwaggerModule.setup("/", app, document);
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
 

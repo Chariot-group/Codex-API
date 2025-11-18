@@ -6,6 +6,7 @@ export const swaggerConfig = new DocumentBuilder()
   .setTitle("Codex API")
   .setDescription("Codex API Documentation")
   .setVersion(process.env.API_VERSION || "unknown")
+  .addServer(`${process.env.API_URL_SWAGGER || "unknown"}`)
   .addBearerAuth()
   .build();
 
