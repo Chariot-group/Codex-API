@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Logger, Param, Post, Query } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, Logger, Param, Post, Query } from "@nestjs/common";
 import { MonstersService } from "@/resources/monsters/monsters.service";
 import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, getSchemaPath } from "@nestjs/swagger";
 import { IPaginatedResponse, IResponse } from "@/common/dtos/reponse.dto";
@@ -156,6 +156,15 @@ export class MonstersController {
   @ApiResponse({ status: 410, description: "Monster #ID has been deleted" })
   async delete(@Param("id", ParseMongoIdPipe) id: Types.ObjectId): Promise<IResponse<Monster>> {
     const monster: IResponse<Monster> = await this.validateResource(id, "en");
+    // Vérifier si au moins une traduction a srd: true
+    const hasSrdTranslation = Array.from(monster.data.translations.values()).some((translation) => translation.srd === true);
+
+    if (hasSrdTranslation) {
+      const message = `Cannot delete monster #${id}: it has at least one SRD translation`;
+      this.logger.error(message);
+      throw new ForbiddenException(message);
+    }
+
     return this.monstersService.delete(id, monster.data);
   }
 }

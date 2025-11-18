@@ -220,6 +220,17 @@ export class SpellsController {
   @ApiResponse({ status: 410, description: "Spell #ID has been deleted" })
   async delete(@Param("id", ParseMongoIdPipe) id: Types.ObjectId): Promise<IResponse<Spell>> {
     const spell: IResponse<Spell> = await this.validateResource(id, "en");
+    
+    // Vérifier si au moins une traduction a srd: true
+    const hasSrdTranslation = Array.from(spell.data.translations.values()).some(
+      (translation) => translation.srd === true,
+    );
+
+    if (hasSrdTranslation) {
+      const message = `Cannot delete spell #${id}: it has at least one SRD translation`;
+      this.logger.error(message);
+      throw new ForbiddenException(message);
+    }
 
     return this.spellsService.delete(id, spell.data);
   }
