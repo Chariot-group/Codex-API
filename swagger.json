@@ -1,20 +1,6 @@
 {
   "openapi": "3.0.0",
   "paths": {
-    "/": {
-      "get": {
-        "operationId": "AppController_getHello",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "App"
-        ]
-      }
-    },
     "/spells": {
       "get": {
         "operationId": "SpellsController_findAll",
@@ -585,7 +571,11 @@
     "contact": {}
   },
   "tags": [],
-  "servers": [],
+  "servers": [
+    {
+      "url": "http://localhost:9000"
+    }
+  ],
   "components": {
     "securitySchemes": {
       "bearer": {
@@ -610,12 +600,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T07:18:48.008Z"
+            "example": "2025-11-18T08:50:27.180Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T07:18:48.008Z"
+            "example": "2025-11-18T08:50:27.180Z"
           },
           "name": {
             "type": "string",
@@ -1370,12 +1360,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T07:18:48.570Z"
+            "example": "2025-11-18T08:50:27.743Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T07:18:48.570Z"
+            "example": "2025-11-18T08:50:27.743Z"
           },
           "name": {
             "type": "string",
