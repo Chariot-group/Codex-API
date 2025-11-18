@@ -67,7 +67,7 @@ describe('SpellsService - create', () => {
 
     await expect(service.create({} as any)).rejects.toThrow(InternalServerErrorException);
 
-    expect(errSpy).toHaveBeenCalledWith(expect.stringMatching(/Error while creating spell/));
+    expect(errSpy).toHaveBeenCalledWith(expect.stringMatching(/An error occurred while creating spell/));
 
     errSpy.mockRestore();
   });

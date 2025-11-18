@@ -1,4 +1,11 @@
-import { GoneException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from "@nestjs/common";
+import {
+  GoneException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { Spell } from "@/resources/spells/schemas/spell.schema";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
@@ -17,7 +24,7 @@ export class SpellsService {
   private readonly logger = new Logger(this.SERVICE_NAME);
   private readonly mapper = new SpellsMapper();
 
-  async findAll(paginationSpell: PaginationSpell) : Promise<IPaginatedResponse<Spell[]>> {
+  async findAll(paginationSpell: PaginationSpell): Promise<IPaginatedResponse<Spell[]>> {
     try {
       const { page = 1, offset = 10, name = "", lang = "" } = paginationSpell;
       const skip = (page - 1) * offset;
@@ -47,8 +54,8 @@ export class SpellsService {
         } else {
           // On cherche dans tous les langues
           const languages = await this.spellModel.distinct("languages");
-          filters["$or"] = languages.map(language => ({
-            [`translations.${language}.name`]: { $regex: decodedName, $options: "i" }
+          filters["$or"] = languages.map((language) => ({
+            [`translations.${language}.name`]: { $regex: decodedName, $options: "i" },
           }));
 
           // On affiche toutes les langues
@@ -91,8 +98,6 @@ export class SpellsService {
         .exec();
       const end = Date.now();
 
-      this.logger.log(JSON.stringify(spells));
-
       this.logger.log(`Spells found in ${end - start}ms`);
 
       return {
@@ -106,16 +111,14 @@ export class SpellsService {
       };
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      const message: string = `Error while fetching spells: ${error.message}`;
-      this.logger.error(message);
+      const message: string = `Error while fetching spells`;
+      this.logger.error(`${message}: ${error}`);
       throw new InternalServerErrorException(message);
     }
   }
 
-  async findOne(id: Types.ObjectId, lang: string) : Promise<IResponse<Spell>> {
+  async findOne(id: Types.ObjectId, lang: string): Promise<IResponse<Spell>> {
     try {
-
-
       let projection: any = {
         tag: 1,
         languages: 1,
@@ -129,13 +132,13 @@ export class SpellsService {
       const spell: Spell = await this.spellModel.findById(id).select(projection).exec();
       const end: number = Date.now();
 
-      if(!spell) {
-        const message = `Spell #${id} not found`
+      if (!spell) {
+        const message = `Spell #${id} not found`;
         this.logger.error(message);
         throw new NotFoundException(message);
       }
 
-      if(spell.deletedAt) {
+      if (spell.deletedAt) {
         const message = `Spell #${id} has been deleted`;
         this.logger.error(message);
         throw new GoneException(message);
@@ -160,11 +163,10 @@ export class SpellsService {
         message,
         data: this.mapper.calculAvailablesLanguages(spell),
       };
-
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      const message: string = `Error while fetching spell #${id}: ${error.message}`;
-      this.logger.error(message);
+      const message: string = `Error while fetching spell #${id}`;
+      this.logger.error(`${message}: ${error}`);
       throw new InternalServerErrorException(message);
     }
   }
@@ -183,18 +185,16 @@ export class SpellsService {
         message,
         data: oldSpell,
       };
-
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      const message: string = `Error while updating spell #${id}: ${error.message}`;
-      this.logger.error(message);
+      const message: string = `Error while updating spell #${id}`;
+      this.logger.error(`${message}: ${error}`);
       throw new InternalServerErrorException(message);
     }
   }
 
   async create(createSpellDto: CreateSpellDto): Promise<IResponse<Spell>> {
     try {
-
       const spell: Spell = this.mapper.dtoToEntity(createSpellDto);
 
       const start: number = Date.now();
@@ -211,13 +211,13 @@ export class SpellsService {
       };
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      const message: string = `Error while creating spell: ${error.message}`;
-      this.logger.error(message);
+      const message: string = "An error occurred while creating spell";
+      this.logger.error(`${message}: ${error}`);
       throw new InternalServerErrorException(message);
     }
   }
 
-  async delete(id: Types.ObjectId, spell: Spell) : Promise<IResponse<Spell>> {
+  async delete(id: Types.ObjectId, spell: Spell): Promise<IResponse<Spell>> {
     try {
       const start: number = Date.now();
       const deleteDate: Date = new Date();
@@ -232,13 +232,11 @@ export class SpellsService {
         message,
         data: this.mapper.calculAvailablesLanguages(spell),
       };
-
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      const message: string = `Error while deleting spell #${id}: ${error.message}`;
-      this.logger.error(message);
+      const message: string = `Error while deleting spell #${id}`;
+      this.logger.error(`${message}: ${error}`);
       throw new InternalServerErrorException(message);
     }
   }
-
 }

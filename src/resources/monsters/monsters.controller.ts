@@ -1,10 +1,11 @@
-import { BadRequestException, Controller, Get, Logger, Param, Query } from "@nestjs/common";
 import { MonstersService } from "@/resources/monsters/monsters.service";
 import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, getSchemaPath } from "@nestjs/swagger";
+import { BadRequestException, Controller, Get, Logger, Param, Query, Body, Post } from "@nestjs/common";
 import { IPaginatedResponse, IResponse } from "@/common/dtos/reponse.dto";
 import { Monster } from "@/resources/monsters/schemas/monster.schema";
 import { MonsterContent } from "@/resources/monsters/schemas/monster-content.schema";
 import { PaginationMonster } from "@/resources/monsters/dtos/find-all.dto";
+import { CreateMonsterDto } from "@/resources/monsters/dtos/create-monster.dto";
 import { ParseMongoIdPipe } from "@/common/pipes/parse-mong-id.pipe";
 import { Types } from "mongoose";
 import { langParam } from "@/resources/monsters/dtos/find-one.dto";
@@ -89,5 +90,39 @@ export class MonstersController {
   ): Promise<IResponse<Monster>> {
     const { lang = "en" } = query;
     return this.validateResource(id, lang);
+  }
+
+  @Post()
+  @ApiOperation({ summary: "Create a new monster" })
+  @ApiOkResponse({
+    description: "Monster created successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(IResponse) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(Monster) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Validation DTO failed",
+    schema: {
+      allOf: [
+        {
+          example: {
+            message: ["monsterContent.name must be a string"],
+            statusCode: 400,
+            error: "Bad Request",
+          },
+        },
+      ],
+    },
+  })
+  async create(@Body() monsterDto: CreateMonsterDto): Promise<IResponse<Monster>> {
+    return this.monstersService.create(monsterDto);
   }
 }
