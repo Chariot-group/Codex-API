@@ -1,6 +1,17 @@
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  Logger,
+  Param,
+  Post,
+  Query,
+} from "@nestjs/common";
 import { MonstersService } from "@/resources/monsters/monsters.service";
 import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, getSchemaPath } from "@nestjs/swagger";
-import { BadRequestException, Controller, Get, Logger, Param, Query, Body, Post } from "@nestjs/common";
 import { IPaginatedResponse, IResponse } from "@/common/dtos/reponse.dto";
 import { Monster } from "@/resources/monsters/schemas/monster.schema";
 import { MonsterContent } from "@/resources/monsters/schemas/monster-content.schema";
@@ -9,6 +20,7 @@ import { CreateMonsterDto } from "@/resources/monsters/dtos/create-monster.dto";
 import { ParseMongoIdPipe } from "@/common/pipes/parse-mong-id.pipe";
 import { Types } from "mongoose";
 import { langParam } from "@/resources/monsters/dtos/find-one.dto";
+import { ProblemDetailsDto } from "@/common/dtos/errors.dto";
 
 @ApiExtraModels(Monster, MonsterContent, IResponse, IPaginatedResponse)
 @Controller("monsters")
@@ -81,9 +93,13 @@ export class MonstersController {
       ],
     },
   })
-  @ApiResponse({ status: 404, description: "Monster #ID not found" })
-  @ApiResponse({ status: 400, description: "Error while fetching monster #ID: Id is not a valid mongoose id" })
-  @ApiResponse({ status: 410, description: "Monster #ID has been deleted" })
+  @ApiResponse({ status: 404, description: "Monster #ID not found", type: ProblemDetailsDto })
+  @ApiResponse({
+    status: 400,
+    description: "Error while fetching monster #ID: Id is not a valid mongoose id",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({ status: 410, description: "Monster #ID has been deleted", type: ProblemDetailsDto })
   async findOne(
     @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
     @Query() query: langParam,
@@ -110,19 +126,59 @@ export class MonstersController {
   @ApiResponse({
     status: 400,
     description: "Validation DTO failed",
+    type: ProblemDetailsDto,
+  })
+  async create(@Body() CreateMonsterDto: CreateMonsterDto): Promise<IResponse<Monster>> {
+    return this.monstersService.create(CreateMonsterDto);
+  }
+
+  @Delete(":id")
+  @ApiOperation({ summary: "Delete a monster by ID" })
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the monster to delete",
+    example: "507f1f77bcf86cd799439011",
+  })
+  @ApiOkResponse({
+    description: "Monster #ID deleted",
     schema: {
       allOf: [
+        { $ref: getSchemaPath(IResponse) },
         {
-          example: {
-            message: ["monsterContent.name must be a string"],
-            statusCode: 400,
-            error: "Bad Request",
+          properties: {
+            data: { $ref: getSchemaPath(Monster) },
           },
         },
       ],
     },
   })
-  async create(@Body() monsterDto: CreateMonsterDto): Promise<IResponse<Monster>> {
-    return this.monstersService.create(monsterDto);
+  @ApiResponse({ status: 404, description: "Monster #ID not found", type: ProblemDetailsDto })
+  @ApiResponse({
+    status: 400,
+    description: "Error while fetching monster #ID: Id is not a valid mongoose id",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Cannot delete monster #ID: it has at least one SRD translation",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({ status: 410, description: "Monster #ID has been deleted", type: ProblemDetailsDto })
+  async delete(@Param("id", ParseMongoIdPipe) id: Types.ObjectId): Promise<IResponse<Monster>> {
+    const monster: IResponse<Monster> = await this.validateResource(id, "en");
+    // Vérifier si au moins une traduction a srd: true
+    const hasSrdTranslation = Array.from(monster.data.translations.values()).some(
+      (translation) => translation.srd === true,
+    );
+
+    if (hasSrdTranslation) {
+      const message = `Cannot delete monster #${id}: it has at least one SRD translation`;
+      this.logger.error(message);
+      throw new ForbiddenException(message);
+    }
+
+    return this.monstersService.delete(id, monster.data);
   }
 }

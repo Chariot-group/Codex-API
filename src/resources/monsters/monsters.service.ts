@@ -389,4 +389,27 @@ export class MonstersService {
       throw new InternalServerErrorException(message);
     }
   }
+
+  async delete(id: Types.ObjectId, monster: Monster): Promise<IResponse<Monster>> {
+    try {
+      const start: number = Date.now();
+      const deleteDate: Date = new Date();
+      await this.monsterModel.updateOne({ _id: id }, { deletedAt: deleteDate }).exec();
+      monster.deletedAt = deleteDate;
+      const end: number = Date.now();
+
+      const message: string = `Monster #${id} deleted in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: this.mapper.calculAvailablesLanguages(monster),
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while deleting monster #${id}`;
+      this.logger.error(`${message}: ${error}`);
+      throw new InternalServerErrorException(message);
+    }
+  }
 }
