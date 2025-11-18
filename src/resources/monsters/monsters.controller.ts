@@ -169,9 +169,10 @@ export class MonstersController {
   @ApiResponse({
     status: 403,
     description: "Cannot update monster #ID: it has at least one SRD translation",
+    type: ProblemDetailsDto,
   })
-  @ApiResponse({ status: 404, description: "Spell #ID not found" })
-  @ApiResponse({ status: 410, description: "Spell #ID has been deleted" })
+  @ApiResponse({ status: 404, description: "Spell #ID not found", type: ProblemDetailsDto })
+  @ApiResponse({ status: 410, description: "Spell #ID has been deleted", type: ProblemDetailsDto })
   async update(
     @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
     @Body() updateData: UpdateMonsterDto,
