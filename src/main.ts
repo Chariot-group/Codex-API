@@ -5,6 +5,7 @@ import { WinstonModule } from "nest-winston";
 import { setupSwagger } from "@/config/swagger.config";
 import { SwaggerModule } from "@nestjs/swagger";
 import { ValidationPipe } from "@nestjs/common";
+import { ProblemDetailsFilter } from "@/common/filters/errors.filter";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -12,6 +13,8 @@ async function bootstrap() {
       instance: instance,
     }),
   });
+
+  app.useGlobalFilters(new ProblemDetailsFilter());
 
   const document = setupSwagger(app);
   SwaggerModule.setup("/", app, document);

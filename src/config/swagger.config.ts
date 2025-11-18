@@ -1,3 +1,4 @@
+import { InvalidParamDto, ProblemDetailsDto } from "@/common/dtos/errors.dto";
 import { INestApplication } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
@@ -10,5 +11,7 @@ export const swaggerConfig = new DocumentBuilder()
   .build();
 
 export function setupSwagger(app: INestApplication) {
-  return SwaggerModule.createDocument(app, swaggerConfig);
+  return SwaggerModule.createDocument(app, swaggerConfig, {
+    extraModels: [ProblemDetailsDto, InvalidParamDto]
+  });
 }
