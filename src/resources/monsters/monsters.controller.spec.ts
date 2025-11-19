@@ -26,6 +26,8 @@ describe("MonstersController", () => {
     findAll: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
+    delete: jest.fn(),
+    update: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -36,6 +38,9 @@ describe("MonstersController", () => {
 
     controller = module.get<MonstersController>(MonstersController);
     service = module.get<MonstersService>(MonstersService);
+
+    // Reset all mocks before each test
+    jest.clearAllMocks();
   });
 
   // -------------------------------------------------------------
@@ -125,6 +130,77 @@ describe("MonstersController", () => {
 
       expect(service.create).toHaveBeenCalledWith(dto);
       expect(result).toEqual({ data: mockMonster });
+    });
+  });
+
+  // -------------------------------------------------------------
+  // delete
+  // -------------------------------------------------------------
+  describe("delete", () => {
+    it("should delete a monster when no SRD translations", async () => {
+      mockService.findOne.mockResolvedValue({ data: mockMonster });
+      mockService.delete.mockResolvedValue({ data: { ...mockMonster, deletedAt: new Date() } });
+
+      const result = await controller.delete(id as any);
+
+      expect(service.findOne).toHaveBeenCalledWith(id, "en");
+      expect(service.delete).toHaveBeenCalledWith(id, mockMonster);
+      expect(result.data.deletedAt).toBeDefined();
+    });
+
+    it("should throw ForbiddenException when monster has SRD translation", async () => {
+      const mockSRDMonster = {
+        _id: id,
+        tag: 1,
+        languages: ["en"],
+        translations: new Map([["en", { name: "Goblin", srd: true }]]),
+      };
+
+      mockService.findOne.mockResolvedValue({ data: mockSRDMonster });
+
+      await expect(controller.delete(id as any)).rejects.toThrow(
+        "Cannot delete monster #" + id + ": it has at least one SRD translation",
+      );
+
+      expect(service.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  // -------------------------------------------------------------
+  // update
+  // -------------------------------------------------------------
+  describe("update", () => {
+    it("should update a monster when no SRD translations", async () => {
+      const updateDto = { tag: 1 } as any;
+      mockService.findOne.mockResolvedValue({ data: mockMonster });
+      mockService.update.mockResolvedValue({ data: { ...mockMonster, tag: 1 } });
+
+      const result = await controller.update(id as any, updateDto);
+
+      expect(service.findOne).toHaveBeenCalledWith(id, "en");
+      expect(service.update).toHaveBeenCalledWith(id, mockMonster, updateDto);
+      expect(result.data.tag).toBe(1);
+    });
+
+    it("should throw ForbiddenException when monster has SRD translation", async () => {
+      const mockSRDMonster = {
+        _id: id,
+        tag: 0,
+        languages: ["en", "fr"],
+        translations: new Map([
+          ["en", { name: "Goblin", srd: true }],
+          ["fr", { name: "Gobelin", srd: false }],
+        ]),
+      };
+
+      const updateDto = { tag: 1 } as any;
+      mockService.findOne.mockResolvedValue({ data: mockSRDMonster });
+
+      await expect(controller.update(id as any, updateDto)).rejects.toThrow(
+        "Cannot update monster #" + id + ": it has at least one SRD translation",
+      );
+
+      expect(service.update).not.toHaveBeenCalled();
     });
   });
 

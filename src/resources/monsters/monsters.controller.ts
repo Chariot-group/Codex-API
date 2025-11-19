@@ -234,14 +234,6 @@ export class MonstersController {
       throw new ForbiddenException(message);
     }
 
-    for (const [lang, translation] of oldMonster.data.translations) {
-      if (translation.srd) {
-        const message = `Monster #${id} is in srd and cannot be modified`;
-        this.logger.error(message);
-        throw new ForbiddenException(message);
-      }
-    }
-
     return this.monstersService.update(id, oldMonster.data, updateData);
   }
 }
