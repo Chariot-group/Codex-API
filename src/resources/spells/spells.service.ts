@@ -15,6 +15,10 @@ import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 import { UpdateSpellDto } from "@/resources/spells/dtos/update-spell.dto";
 import { CreateSpellDto } from "@/resources/spells/dtos/create-spell.dto";
 import { SpellsMapper } from "@/resources/spells/mappers/spells.mapper";
+import {
+  SpellTranslationSummaryDto,
+  SpellTranslationsListDto,
+} from "@/resources/spells/dtos/spell-translation-summary.dto";
 
 @Injectable()
 export class SpellsService {
@@ -235,6 +239,118 @@ export class SpellsService {
     } catch (error) {
       if (error instanceof HttpException) throw error;
       const message: string = `Error while deleting spell #${id}`;
+      this.logger.error(`${message}: ${error}`);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  /**
+   * Get all available translations for a spell
+   * @param id Spell ID
+   * @returns List of translations with basic metadata
+   */
+  async getTranslations(id: Types.ObjectId): Promise<IResponse<SpellTranslationsListDto>> {
+    try {
+      const start: number = Date.now();
+      const spell: Spell = await this.spellModel.findById(id).exec();
+      const end: number = Date.now();
+
+      if (!spell) {
+        const message = `Spell #${id} not found`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      if (spell.deletedAt) {
+        const message = `Spell #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      const translations: SpellTranslationSummaryDto[] = [];
+
+      for (const [lang, content] of spell.translations) {
+        // Skip translations that have been deleted
+        if (content.deletedAt) {
+          continue;
+        }
+
+        translations.push({
+          lang,
+          srd: content.srd,
+          name: content.name,
+          createdAt: content.createdAt,
+          updatedAt: content.updatedAt,
+        });
+      }
+
+      const message: string = `Spell #${id} translations found in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: {
+          spellId: id.toString(),
+          tag: spell.tag,
+          translations,
+        },
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while fetching translations for spell #${id}`;
+      this.logger.error(`${message}: ${error}`);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  /**
+   * Get a specific translation for a spell
+   * @param id Spell ID
+   * @param lang ISO 2 letters language code
+   * @returns The translation content in the specified language
+   */
+  async getTranslation(id: Types.ObjectId, lang: string): Promise<IResponse<SpellContent>> {
+    try {
+      const start: number = Date.now();
+      const spell: Spell = await this.spellModel.findById(id).exec();
+      const end: number = Date.now();
+
+      if (!spell) {
+        const message = `Spell #${id} not found`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      if (spell.deletedAt) {
+        const message = `Spell #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      const translation: SpellContent = spell.translations.get(lang);
+
+      if (!translation) {
+        const message = `Translation '${lang}' not found for spell #${id}`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      if (translation.deletedAt) {
+        const message = `Translation '${lang}' for spell #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      const message: string = `Spell #${id} translation '${lang}' found in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: translation,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while fetching translation '${lang}' for spell #${id}`;
       this.logger.error(`${message}: ${error}`);
       throw new InternalServerErrorException(message);
     }

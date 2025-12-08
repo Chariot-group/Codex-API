@@ -23,8 +23,19 @@ import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 import { UpdateSpellDto } from "@/resources/spells/dtos/update-spell.dto";
 import { CreateSpellDto } from "@/resources/spells/dtos/create-spell.dto";
 import { ProblemDetailsDto } from "@/common/dtos/errors.dto";
+import {
+  SpellTranslationSummaryDto,
+  SpellTranslationsListDto,
+} from "@/resources/spells/dtos/spell-translation-summary.dto";
 
-@ApiExtraModels(Spell, SpellContent, IResponse, IPaginatedResponse)
+@ApiExtraModels(
+  Spell,
+  SpellContent,
+  IResponse,
+  IPaginatedResponse,
+  SpellTranslationSummaryDto,
+  SpellTranslationsListDto,
+)
 @Controller("spells")
 export class SpellsController {
   constructor(private readonly spellsService: SpellsService) {}
@@ -109,6 +120,98 @@ export class SpellsController {
   ): Promise<IResponse<Spell>> {
     const { lang = "en" } = query;
     return this.validateResource(id, lang);
+  }
+
+  @Get(":id/translations")
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the spell to get translations for",
+    example: "507f1f77bcf86cd799439011",
+  })
+  @ApiOperation({ summary: "Get all available translations for a spell" })
+  @ApiOkResponse({
+    description: "Spell translations found successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(IResponse) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(SpellTranslationsListDto) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({ status: 404, description: "Spell #ID not found", type: ProblemDetailsDto })
+  @ApiResponse({
+    status: 400,
+    description: "Error while fetching spell #ID: Id is not a valid mongoose id",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({ status: 410, description: "Spell #ID has been deleted", type: ProblemDetailsDto })
+  async getTranslations(
+    @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
+  ): Promise<IResponse<SpellTranslationsListDto>> {
+    if (!Types.ObjectId.isValid(id)) {
+      const message = `Error while fetching spell #${id}: Id is not a valid mongoose id`;
+      this.logger.error(message);
+      throw new BadRequestException(message);
+    }
+    return this.spellsService.getTranslations(id);
+  }
+
+  @Get(":id/translations/:lang")
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the spell to get the translation for",
+    example: "507f1f77bcf86cd799439011",
+  })
+  @ApiParam({
+    name: "lang",
+    type: String,
+    required: true,
+    description: "The ISO 2 letters language code (e.g., 'fr', 'es', 'de')",
+    example: "fr",
+  })
+  @ApiOperation({ summary: "Get a specific translation for a spell by language code" })
+  @ApiOkResponse({
+    description: "Spell translation found successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(IResponse) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(SpellContent) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({ status: 404, description: "Spell #ID not found or translation not found", type: ProblemDetailsDto })
+  @ApiResponse({
+    status: 400,
+    description: "Error while fetching spell #ID: Id is not a valid mongoose id",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 410,
+    description: "Spell #ID has been deleted or translation has been deleted",
+    type: ProblemDetailsDto,
+  })
+  async getTranslation(
+    @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
+    @Param("lang") lang: string,
+  ): Promise<IResponse<SpellContent>> {
+    if (!Types.ObjectId.isValid(id)) {
+      const message = `Error while fetching spell #${id}: Id is not a valid mongoose id`;
+      this.logger.error(message);
+      throw new BadRequestException(message);
+    }
+    return this.spellsService.getTranslation(id, lang);
   }
 
   @Patch(":id")
