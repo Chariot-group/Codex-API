@@ -1,4 +1,17 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { IsString, Matches } from "class-validator";
+
+export class DeleteTranslationParamDto {
+  @ApiProperty({
+    description: "The ISO 2-letter code of the language to delete",
+    example: "fr",
+  })
+  @IsString()
+  @Matches(/^[a-z]{2}$/, {
+    message: "Language must be a 2-letter ISO code in lowercase (e.g., fr, en, es)",
+  })
+  lang: string;
+}
 
 export class DeleteTranslationResponseDto {
   @ApiProperty({

@@ -16,6 +16,7 @@ import { IResponse, IPaginatedResponse } from "@/common/dtos/reponse.dto";
 import { PaginationSpell } from "@/resources/spells/dtos/find-all.dto";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 import { UpdateSpellDto } from "@/resources/spells/dtos/update-spell.dto";
+import { UpdateSpellTranslationDto } from "@/resources/spells/dtos/update-spell-translation.dto";
 import { CreateSpellDto } from "@/resources/spells/dtos/create-spell.dto";
 import { CreateSpellTranslationDto } from "@/resources/spells/dtos/create-spell-translation.dto";
 import { SpellsMapper } from "@/resources/spells/mappers/spells.mapper";
@@ -589,6 +590,96 @@ export class SpellsService {
     } catch (error) {
       if (error instanceof HttpException) throw error;
       const message: string = `Error while adding translation to spell #${id}`;
+      this.logger.error(`${message}: ${error}`);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  /**
+   * Update a specific translation of a spell
+   * @param id Spell ID
+   * @param lang Language code (ISO 2 letters)
+   * @param updateData Partial update data for the translation
+   * @returns Updated spell
+   */
+  async updateTranslation(
+    id: Types.ObjectId,
+    lang: string,
+    updateData: UpdateSpellTranslationDto,
+  ): Promise<IResponse<SpellContent>> {
+    try {
+      const start: number = Date.now();
+
+      // Fetch the spell
+      const spell: Spell = await this.spellModel.findById(id).exec();
+
+      if (!spell) {
+        const message = `Spell #${id} not found`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      if (spell.deletedAt) {
+        const message = `Spell #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      // Check if the translation exists
+      const translation: SpellContent = spell.translations.get(lang);
+      if (!translation) {
+        const message = `Translation '${lang}' not found for spell #${id}`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      // Check if translation has been deleted
+      if (translation.deletedAt) {
+        const message = `Translation '${lang}' for spell #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      // Check if components modification is allowed
+      // Components can be modified only if the count remains the same (to allow localized component names)
+      if (updateData.components !== undefined) {
+        const currentComponentsCount = translation.components?.length ?? 0;
+        const newComponentsCount = updateData.components.length;
+        if (currentComponentsCount !== newComponentsCount) {
+          const message = `Cannot modify components count for spell #${id}: current translation has ${currentComponentsCount} component(s), but ${newComponentsCount} were provided. Components count must be consistent across all translations.`;
+          this.logger.error(message);
+          throw new ForbiddenException(message);
+        }
+      }
+
+      // Build the update object for MongoDB
+      const updateFields: Record<string, any> = {};
+      for (const [key, value] of Object.entries(updateData)) {
+        if (value !== undefined) {
+          updateFields[`translations.${lang}.${key}`] = value;
+        }
+      }
+
+      // Always update the updatedAt timestamp
+      updateFields[`translations.${lang}.updatedAt`] = new Date();
+
+      await this.spellModel.updateOne({ _id: id }, { $set: updateFields }).exec();
+
+      // Fetch the updated translation
+      const updatedSpell: Spell = await this.spellModel.findById(id).exec();
+      const updatedTranslation: SpellContent = updatedSpell.translations.get(lang);
+
+      const end: number = Date.now();
+      const message: string = `Translation '${lang}' for spell #${id} updated in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: updatedTranslation,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while updating translation '${lang}' for spell #${id}`;
       this.logger.error(`${message}: ${error}`);
       throw new InternalServerErrorException(message);
     }
