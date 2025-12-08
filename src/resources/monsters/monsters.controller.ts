@@ -5,6 +5,8 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  HttpCode,
+  HttpStatus,
   Logger,
   Param,
   Patch,
@@ -18,6 +20,7 @@ import { Monster } from "@/resources/monsters/schemas/monster.schema";
 import { MonsterContent } from "@/resources/monsters/schemas/monster-content.schema";
 import { PaginationMonster } from "@/resources/monsters/dtos/find-all.dto";
 import { CreateMonsterDto } from "@/resources/monsters/dtos/create-monster.dto";
+import { CreateMonsterTranslationDto } from "@/resources/monsters/dtos/create-monster-translation.dto";
 import { ParseMongoIdPipe } from "@/common/pipes/parse-mong-id.pipe";
 import { Types } from "mongoose";
 import { langParam } from "@/resources/monsters/dtos/find-one.dto";
@@ -235,5 +238,74 @@ export class MonstersController {
     }
 
     return this.monstersService.update(id, oldMonster.data, updateData);
+  }
+
+  @Post(":id/translations/:lang")
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: "Add a new translation to a monster" })
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the monster to add a translation to",
+    example: "507f1f77bcf86cd799439011",
+  })
+  @ApiParam({
+    name: "lang",
+    type: String,
+    required: true,
+    description: "The ISO 2 letter code of the language (e.g., fr, es, de)",
+    example: "fr",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Translation added successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(IResponse) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(Monster) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Validation error or invalid language code",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - User doesn't have permission to add this translation",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Monster not found",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 409,
+    description: "Translation for this language already exists",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 410,
+    description: "Monster has been deleted",
+    type: ProblemDetailsDto,
+  })
+  async addTranslation(
+    @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
+    @Param("lang") lang: string,
+    @Body() translationDto: CreateMonsterTranslationDto,
+  ): Promise<IResponse<Monster>> {
+    // TODO: Implement proper authentication/authorization with Guards
+    // For now, we'll determine admin status based on some logic
+    // In a real implementation, this would come from the JWT token or session
+    const isAdmin = false; // Placeholder - should be extracted from request context
+
+    return this.monstersService.addTranslation(id, lang.toLowerCase(), translationDto, isAdmin);
   }
 }

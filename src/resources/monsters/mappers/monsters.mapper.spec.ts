@@ -1,21 +1,21 @@
-import { MonstersMapper } from './monsters.mapper';
-import { CreateMonsterDto } from '../dtos/create-monster.dto';
-import { Monster } from '../schemas/monster.schema';
-import { Types } from 'mongoose';
+import { MonstersMapper } from "./monsters.mapper";
+import { CreateMonsterDto } from "../dtos/create-monster.dto";
+import { Monster } from "../schemas/monster.schema";
+import { Types } from "mongoose";
 
-describe('MonstersMapper', () => {
+describe("MonstersMapper", () => {
   let mapper: MonstersMapper;
 
   beforeEach(() => {
     mapper = new MonstersMapper();
   });
 
-  describe('dtoToEntity', () => {
-    it('should convert a simple CreateMonsterDto to Monster entity', () => {
+  describe("dtoToEntity", () => {
+    it("should convert a simple CreateMonsterDto to Monster entity", () => {
       const dto: CreateMonsterDto = {
-        lang: 'en',
+        lang: "en",
         monsterContent: {
-          name: 'Goblin',
+          name: "Goblin",
           stats: {
             size: 1,
             maxHitPoints: 7,
@@ -29,18 +29,18 @@ describe('MonstersMapper', () => {
       const result: Monster = mapper.dtoToEntity(dto);
 
       expect(result).toBeDefined();
-      expect(result.languages).toEqual(['en']);
+      expect(result.languages).toEqual(["en"]);
       expect(result.translations.size).toBe(1);
-      expect(result.translations.get('en')).toBeDefined();
-      expect(result.translations.get('en')?.name).toBe('Goblin');
-      expect(result.translations.get('en')?.srd).toBe(false);
+      expect(result.translations.get("en")).toBeDefined();
+      expect(result.translations.get("en")?.name).toBe("Goblin");
+      expect(result.translations.get("en")?.srd).toBe(false);
     });
 
-    it('should convert a monster with complete stats', () => {
+    it("should convert a monster with complete stats", () => {
       const dto: CreateMonsterDto = {
-        lang: 'fr',
+        lang: "fr",
         monsterContent: {
-          name: 'Gobelin',
+          name: "Gobelin",
           stats: {
             size: 2,
             maxHitPoints: 20,
@@ -48,7 +48,7 @@ describe('MonstersMapper', () => {
             tempHitPoints: 5,
             armorClass: 18,
             passivePerception: 12,
-            languages: ['Common', 'Goblin'],
+            languages: ["Common", "Goblin"],
             speed: {
               walk: 30,
               climb: 20,
@@ -78,8 +78,8 @@ describe('MonstersMapper', () => {
               stealth: 7,
             },
             senses: [
-              { name: 'Darkvision', value: 60 },
-              { name: 'Passive Perception', value: 12 },
+              { name: "Darkvision", value: 60 },
+              { name: "Passive Perception", value: 12 },
             ],
           },
         },
@@ -88,9 +88,9 @@ describe('MonstersMapper', () => {
       const result: Monster = mapper.dtoToEntity(dto);
 
       expect(result).toBeDefined();
-      const content = result.translations.get('fr');
+      const content = result.translations.get("fr");
       expect(content).toBeDefined();
-      expect(content?.name).toBe('Gobelin');
+      expect(content?.name).toBe("Gobelin");
       expect(content?.stats).toBeDefined();
       expect(content?.stats?.size).toBe(2);
       expect(content?.stats?.maxHitPoints).toBe(20);
@@ -98,7 +98,7 @@ describe('MonstersMapper', () => {
       expect(content?.stats?.tempHitPoints).toBe(5);
       expect(content?.stats?.armorClass).toBe(18);
       expect(content?.stats?.passivePerception).toBe(12);
-      expect(content?.stats?.languages).toEqual(['Common', 'Goblin']);
+      expect(content?.stats?.languages).toEqual(["Common", "Goblin"]);
       expect(content?.stats?.speed).toBeDefined();
       expect(content?.stats?.speed?.walk).toBe(30);
       expect(content?.stats?.abilityScores).toBeDefined();
@@ -111,43 +111,43 @@ describe('MonstersMapper', () => {
       expect(content?.stats?.senses?.length).toBe(2);
     });
 
-    it('should convert a monster with affinities', () => {
+    it("should convert a monster with affinities", () => {
       const dto: CreateMonsterDto = {
-        lang: 'en',
+        lang: "en",
         monsterContent: {
-          name: 'Fire Elemental',
+          name: "Fire Elemental",
           affinities: {
-            resistances: ['cold'],
-            immunities: ['fire', 'poison'],
-            vulnerabilities: ['water'],
-            conditionImmunities: ['exhaustion', 'paralyzed'],
+            resistances: ["cold"],
+            immunities: ["fire", "poison"],
+            vulnerabilities: ["water"],
+            conditionImmunities: ["exhaustion", "paralyzed"],
           },
         },
       } as any;
 
       const result: Monster = mapper.dtoToEntity(dto);
 
-      const content = result.translations.get('en');
+      const content = result.translations.get("en");
       expect(content?.affinities).toBeDefined();
-      expect(content?.affinities?.immunities).toContain('fire');
-      expect(content?.affinities?.resistances).toContain('cold');
-      expect(content?.affinities?.vulnerabilities).toContain('water');
-      expect(content?.affinities?.conditionImmunities).toContain('exhaustion');
+      expect(content?.affinities?.immunities).toContain("fire");
+      expect(content?.affinities?.resistances).toContain("cold");
+      expect(content?.affinities?.vulnerabilities).toContain("water");
+      expect(content?.affinities?.conditionImmunities).toContain("exhaustion");
     });
 
-    it('should convert a monster with abilities', () => {
+    it("should convert a monster with abilities", () => {
       const dto: CreateMonsterDto = {
-        lang: 'en',
+        lang: "en",
         monsterContent: {
-          name: 'Ancient Dragon',
+          name: "Ancient Dragon",
           abilities: [
             {
-              name: 'Legendary Resistance',
-              description: 'Can choose to succeed on a failed saving throw',
+              name: "Legendary Resistance",
+              description: "Can choose to succeed on a failed saving throw",
             },
             {
-              name: 'Magic Resistance',
-              description: 'Advantage on saving throws against spells',
+              name: "Magic Resistance",
+              description: "Advantage on saving throws against spells",
             },
           ],
         },
@@ -155,32 +155,32 @@ describe('MonstersMapper', () => {
 
       const result: Monster = mapper.dtoToEntity(dto);
 
-      const content = result.translations.get('en');
+      const content = result.translations.get("en");
       expect(content?.abilities).toBeDefined();
       expect(content?.abilities?.length).toBe(2);
-      expect(content?.abilities?.[0].name).toBe('Legendary Resistance');
-      expect(content?.abilities?.[1].name).toBe('Magic Resistance');
+      expect(content?.abilities?.[0].name).toBe("Legendary Resistance");
+      expect(content?.abilities?.[1].name).toBe("Magic Resistance");
     });
 
-    it('should convert a monster with spellcasting', () => {
+    it("should convert a monster with spellcasting", () => {
       const spellId1 = new Types.ObjectId();
       const spellId2 = new Types.ObjectId();
 
       const dto: CreateMonsterDto = {
-        lang: 'en',
+        lang: "en",
         monsterContent: {
-          name: 'Wizard',
+          name: "Wizard",
           spellcasting: [
             {
-              ability: 'intelligence',
+              ability: "intelligence",
               saveDC: 15,
               attackBonus: 7,
               totalSlots: 10,
               spells: [spellId1.toString(), spellId2.toString()],
               spellSlotsByLevel: {
-                '1': 4,
-                '2': 3,
-                '3': 3,
+                "1": 4,
+                "2": 3,
+                "3": 3,
               },
             },
           ],
@@ -189,10 +189,10 @@ describe('MonstersMapper', () => {
 
       const result: Monster = mapper.dtoToEntity(dto);
 
-      const content = result.translations.get('en');
+      const content = result.translations.get("en");
       expect(content?.spellcasting).toBeDefined();
       expect(content?.spellcasting?.length).toBe(1);
-      expect(content?.spellcasting?.[0].ability).toBe('intelligence');
+      expect(content?.spellcasting?.[0].ability).toBe("intelligence");
       expect(content?.spellcasting?.[0].saveDC).toBe(15);
       expect(content?.spellcasting?.[0].attackBonus).toBe(7);
       expect(content?.spellcasting?.[0].totalSlots).toBe(10);
@@ -201,60 +201,60 @@ describe('MonstersMapper', () => {
       expect(content?.spellcasting?.[0].spellSlotsByLevel).toBeDefined();
     });
 
-    it('should convert a monster with actions', () => {
+    it("should convert a monster with actions", () => {
       const dto: CreateMonsterDto = {
-        lang: 'en',
+        lang: "en",
         monsterContent: {
-          name: 'Warrior',
+          name: "Warrior",
           actions: {
             standard: [
               {
-                name: 'Sword Attack',
-                type: 'melee',
+                name: "Sword Attack",
+                type: "melee",
                 attackBonus: 5,
-                range: '5 ft',
-                description: 'A mighty sword strike',
+                range: "5 ft",
+                description: "A mighty sword strike",
                 damage: {
-                  dice: '1d8+3',
-                  type: 'slashing',
+                  dice: "1d8+3",
+                  type: "slashing",
                 },
               },
             ],
             legendary: [
               {
-                name: 'Tail Attack',
-                type: 'melee',
+                name: "Tail Attack",
+                type: "melee",
                 attackBonus: 8,
-                range: '10 ft',
-                description: 'A powerful tail swipe',
+                range: "10 ft",
+                description: "A powerful tail swipe",
                 legendaryActionCost: 2,
                 save: {
-                  type: 'dexterity',
+                  type: "dexterity",
                   dc: 15,
-                  successType: 'half',
+                  successType: "half",
                 },
               },
             ],
             legendaryActionsPerDay: 3,
             reactions: [
               {
-                name: 'Parry',
-                type: 'reaction',
-                description: 'Parries an incoming attack',
+                name: "Parry",
+                type: "reaction",
+                description: "Parries an incoming attack",
               },
             ],
             bonus: [
               {
-                name: 'Quick Strike',
-                type: 'bonus',
-                description: 'A quick bonus action attack',
+                name: "Quick Strike",
+                type: "bonus",
+                description: "A quick bonus action attack",
               },
             ],
             lair: [
               {
-                name: 'Lair Action',
-                type: 'lair',
-                description: 'Controls the battlefield',
+                name: "Lair Action",
+                type: "lair",
+                description: "Controls the battlefield",
               },
             ],
           },
@@ -263,13 +263,13 @@ describe('MonstersMapper', () => {
 
       const result: Monster = mapper.dtoToEntity(dto);
 
-      const content = result.translations.get('en');
+      const content = result.translations.get("en");
       expect(content?.actions).toBeDefined();
       expect(content?.actions?.standard).toBeDefined();
       expect(content?.actions?.standard?.length).toBe(1);
-      expect(content?.actions?.standard?.[0].name).toBe('Sword Attack');
+      expect(content?.actions?.standard?.[0].name).toBe("Sword Attack");
       expect(content?.actions?.standard?.[0].damage).toBeDefined();
-      expect(content?.actions?.standard?.[0].damage?.dice).toBe('1d8+3');
+      expect(content?.actions?.standard?.[0].damage?.dice).toBe("1d8+3");
       expect(content?.actions?.legendary).toBeDefined();
       expect(content?.actions?.legendary?.length).toBe(1);
       expect(content?.actions?.legendary?.[0].legendaryActionCost).toBe(2);
@@ -283,21 +283,21 @@ describe('MonstersMapper', () => {
       expect(content?.actions?.lair?.length).toBe(1);
     });
 
-    it('should convert a monster with actions having usage', () => {
+    it("should convert a monster with actions having usage", () => {
       const dto: CreateMonsterDto = {
-        lang: 'en',
+        lang: "en",
         monsterContent: {
-          name: 'Dragon',
+          name: "Dragon",
           actions: {
             standard: [
               {
-                name: 'Breath Weapon',
-                type: 'special',
-                description: 'Breathes fire',
+                name: "Breath Weapon",
+                type: "special",
+                description: "Breathes fire",
                 usage: {
-                  type: 'recharge',
+                  type: "recharge",
                   times: 1,
-                  dice: '1d6',
+                  dice: "1d6",
                   minValue: 5,
                 },
               },
@@ -308,17 +308,17 @@ describe('MonstersMapper', () => {
 
       const result: Monster = mapper.dtoToEntity(dto);
 
-      const content = result.translations.get('en');
+      const content = result.translations.get("en");
       expect(content?.actions?.standard?.[0].usage).toBeDefined();
-      expect(content?.actions?.standard?.[0].usage?.type).toBe('recharge');
-      expect(content?.actions?.standard?.[0].usage?.dice).toBe('1d6');
+      expect(content?.actions?.standard?.[0].usage?.type).toBe("recharge");
+      expect(content?.actions?.standard?.[0].usage?.dice).toBe("1d6");
     });
 
-    it('should convert a monster with challenge', () => {
+    it("should convert a monster with challenge", () => {
       const dto: CreateMonsterDto = {
-        lang: 'en',
+        lang: "en",
         monsterContent: {
-          name: 'Boss Monster',
+          name: "Boss Monster",
           challenge: {
             challengeRating: 10,
             experiencePoints: 5900,
@@ -328,48 +328,48 @@ describe('MonstersMapper', () => {
 
       const result: Monster = mapper.dtoToEntity(dto);
 
-      const content = result.translations.get('en');
+      const content = result.translations.get("en");
       expect(content?.challenge).toBeDefined();
       expect(content?.challenge?.challengeRating).toBe(10);
       expect(content?.challenge?.experiencePoints).toBe(5900);
     });
 
-    it('should convert a monster with profile', () => {
+    it("should convert a monster with profile", () => {
       const dto: CreateMonsterDto = {
-        lang: 'en',
+        lang: "en",
         monsterContent: {
-          name: 'Evil Wizard',
+          name: "Evil Wizard",
           profile: {
-            type: 'humanoid',
-            subtype: 'human',
-            alignment: 'chaotic evil',
+            type: "humanoid",
+            subtype: "human",
+            alignment: "chaotic evil",
           },
         },
       } as any;
 
       const result: Monster = mapper.dtoToEntity(dto);
 
-      const content = result.translations.get('en');
+      const content = result.translations.get("en");
       expect(content?.profile).toBeDefined();
-      expect(content?.profile?.type).toBe('humanoid');
-      expect(content?.profile?.subtype).toBe('human');
-      expect(content?.profile?.alignment).toBe('chaotic evil');
+      expect(content?.profile?.type).toBe("humanoid");
+      expect(content?.profile?.subtype).toBe("human");
+      expect(content?.profile?.alignment).toBe("chaotic evil");
     });
 
-    it('should handle spellcasting with Map for spellSlotsByLevel', () => {
+    it("should handle spellcasting with Map for spellSlotsByLevel", () => {
       const spellId = new Types.ObjectId();
       const spellSlots = new Map([
-        ['1', 4],
-        ['2', 3],
+        ["1", 4],
+        ["2", 3],
       ]);
 
       const dto: CreateMonsterDto = {
-        lang: 'en',
+        lang: "en",
         monsterContent: {
-          name: 'Cleric',
+          name: "Cleric",
           spellcasting: [
             {
-              ability: 'wisdom',
+              ability: "wisdom",
               saveDC: 13,
               spells: [spellId.toString()],
               spellSlotsByLevel: spellSlots as any,
@@ -380,16 +380,16 @@ describe('MonstersMapper', () => {
 
       const result: Monster = mapper.dtoToEntity(dto);
 
-      const content = result.translations.get('en');
+      const content = result.translations.get("en");
       expect(content?.spellcasting?.[0].spellSlotsByLevel).toBeDefined();
       expect(content?.spellcasting?.[0].spellSlotsByLevel instanceof Map).toBe(true);
     });
 
-    it('should set default values for optional fields', () => {
+    it("should set default values for optional fields", () => {
       const dto: CreateMonsterDto = {
-        lang: 'en',
+        lang: "en",
         monsterContent: {
-          name: 'Simple Monster',
+          name: "Simple Monster",
           stats: {
             size: 1,
             maxHitPoints: 10,
@@ -399,7 +399,7 @@ describe('MonstersMapper', () => {
 
       const result: Monster = mapper.dtoToEntity(dto);
 
-      const content = result.translations.get('en');
+      const content = result.translations.get("en");
       expect(content?.srd).toBe(false);
       expect(content?.stats?.armorClass).toBe(10);
       expect(content?.stats?.currentHitPoints).toBe(10);
@@ -407,18 +407,18 @@ describe('MonstersMapper', () => {
       expect(content?.stats?.passivePerception).toBe(0);
     });
 
-    it('should handle empty arrays and undefined fields', () => {
+    it("should handle empty arrays and undefined fields", () => {
       const dto: CreateMonsterDto = {
-        lang: 'en',
+        lang: "en",
         monsterContent: {
-          name: 'Minimal Monster',
+          name: "Minimal Monster",
         },
       } as any;
 
       const result: Monster = mapper.dtoToEntity(dto);
 
-      const content = result.translations.get('en');
-      expect(content?.name).toBe('Minimal Monster');
+      const content = result.translations.get("en");
+      expect(content?.name).toBe("Minimal Monster");
       expect(content?.abilities).toBeUndefined();
       expect(content?.spellcasting).toBeUndefined();
       expect(content?.actions).toBeUndefined();

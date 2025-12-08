@@ -1,4 +1,4 @@
-import { ApiExtraModels, ApiProperty } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty } from "@nestjs/swagger";
 
 export class InvalidParamDto {
   @ApiProperty({ example: "spellContent.level" })

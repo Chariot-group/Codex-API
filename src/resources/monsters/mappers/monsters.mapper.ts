@@ -22,6 +22,7 @@ import {
   CreateChallengeDto,
   CreateProfileDto,
 } from "@/resources/monsters/dtos/create-monster-content.dto";
+import { CreateMonsterTranslationDto } from "@/resources/monsters/dtos/create-monster-translation.dto";
 import { Stats } from "@/resources/monsters/schemas/stats/stats.schema";
 import { Speed } from "@/resources/monsters/schemas/stats/sub/speed.schema";
 import { AbilityScores } from "@/resources/monsters/schemas/stats/sub/abilityScores.schema";
@@ -101,6 +102,132 @@ export class MonstersMapper extends DtoMapper<Monster> {
     // Profile
     if (dto.profile) {
       monsterContent.profile = this.dtoProfileToEntity(dto.profile);
+    }
+
+    return monsterContent;
+  }
+
+  /**
+   * Convert CreateMonsterTranslationDto to MonsterContent entity.
+   * This method merges the text translations from the DTO with the numeric/game values
+   * from the original MonsterContent.
+   * @param dto CreateMonsterTranslationDto source with text translations only
+   * @param original MonsterContent to copy numeric values from
+   * @returns MonsterContent entity with merged values
+   */
+  dtoTranslationToEntity(dto: CreateMonsterTranslationDto, original: MonsterContent): MonsterContent {
+    const monsterContent: MonsterContent = new MonsterContent();
+
+    // Copy numeric values from original
+    monsterContent.srd = original.srd;
+    monsterContent.createdAt = new Date();
+    monsterContent.updatedAt = new Date();
+
+    // Set translated name
+    monsterContent.name = dto.name;
+
+    // Stats: copy numeric values from original, apply translated languages
+    if (original.stats) {
+      const stats = new Stats();
+      stats.size = original.stats.size;
+      stats.maxHitPoints = original.stats.maxHitPoints;
+      stats.currentHitPoints = original.stats.currentHitPoints;
+      stats.tempHitPoints = original.stats.tempHitPoints;
+      stats.armorClass = original.stats.armorClass;
+      stats.passivePerception = original.stats.passivePerception;
+      stats.speed = original.stats.speed;
+      stats.abilityScores = original.stats.abilityScores;
+      stats.savingThrows = original.stats.savingThrows;
+      stats.skills = original.stats.skills;
+      stats.senses = original.stats.senses;
+
+      // Apply translated languages if provided, otherwise use original
+      stats.languages = dto.stats?.languages ?? original.stats.languages ?? [];
+
+      monsterContent.stats = stats;
+    }
+
+    // Affinities: copy entirely from original (not translatable)
+    if (original.affinities) {
+      monsterContent.affinities = original.affinities;
+    }
+
+    // Abilities: merge translations with original order
+    if (original.abilities && original.abilities.length > 0) {
+      monsterContent.abilities = original.abilities.map((originalAbility, index) => {
+        const ability = new Ability();
+        // If translation is provided for this index, use it
+        if (dto.abilities && dto.abilities[index]) {
+          ability.name = dto.abilities[index].name;
+          ability.description = dto.abilities[index].description;
+        } else {
+          // Otherwise, keep original values
+          ability.name = originalAbility.name;
+          ability.description = originalAbility.description;
+        }
+        return ability;
+      });
+    }
+
+    // Spellcasting: copy entirely from original (not translatable)
+    if (original.spellcasting && original.spellcasting.length > 0) {
+      monsterContent.spellcasting = original.spellcasting;
+    }
+
+    // Actions: merge translated name/description with original numeric values
+    if (original.actions) {
+      const actions = new Actions();
+      actions.legendaryActionsPerDay = original.actions.legendaryActionsPerDay;
+
+      // Helper function to merge action arrays
+      const mergeActions = (
+        originalActions: Action[],
+        translatedActions?: { name?: string; description?: string }[],
+      ): Action[] => {
+        return originalActions.map((originalAction, index) => {
+          const action = new Action();
+          // Copy all numeric/game values from original
+          action.type = originalAction.type;
+          action.attackBonus = originalAction.attackBonus;
+          action.damage = originalAction.damage;
+          action.range = originalAction.range;
+          action.save = originalAction.save;
+          action.usage = originalAction.usage;
+          action.legendaryActionCost = originalAction.legendaryActionCost;
+
+          // Apply translated name/description if provided
+          if (translatedActions && translatedActions[index]) {
+            action.name = translatedActions[index].name ?? originalAction.name;
+            action.description = translatedActions[index].description ?? originalAction.description;
+          } else {
+            action.name = originalAction.name;
+            action.description = originalAction.description;
+          }
+          return action;
+        });
+      };
+
+      actions.standard = mergeActions(original.actions.standard ?? [], dto.actions?.standard);
+      actions.legendary = mergeActions(original.actions.legendary ?? [], dto.actions?.legendary);
+      actions.lair = mergeActions(original.actions.lair ?? [], dto.actions?.lair);
+      actions.reactions = mergeActions(original.actions.reactions ?? [], dto.actions?.reactions);
+      actions.bonus = mergeActions(original.actions.bonus ?? [], dto.actions?.bonus);
+
+      monsterContent.actions = actions;
+    }
+
+    // Challenge: copy entirely from original (not translatable)
+    if (original.challenge) {
+      monsterContent.challenge = original.challenge;
+    }
+
+    // Profile: merge translated values with original
+    if (original.profile) {
+      const profile = new Profile();
+      profile.type = dto.profile?.type ?? original.profile.type;
+      profile.subtype = dto.profile?.subtype ?? original.profile.subtype;
+      profile.alignment = dto.profile?.alignment ?? original.profile.alignment;
+      monsterContent.profile = profile;
     }
 
     return monsterContent;

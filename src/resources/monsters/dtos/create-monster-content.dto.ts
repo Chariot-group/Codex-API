@@ -620,10 +620,7 @@ export class CreateMonsterContentDto {
           "5": { total: 1, used: 0 },
         },
         totalSlots: 14,
-        spells: [
-          "507f1f77bcf86cd799439011",
-          "507f1f77bcf86cd799439012"
-        ],
+        spells: ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"],
       },
     ],
   })

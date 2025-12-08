@@ -401,7 +401,7 @@ export class SpellsController {
     return this.spellsService.addTranslation(id, lang, translationDto, isAdmin);
   }
 
-/**
+  /**
    * Validate resource exists and return it with all translations
    * @param id Resource ID
    * @returns object Spell with all translations

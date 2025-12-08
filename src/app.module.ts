@@ -15,7 +15,7 @@ import { ConverterModule } from "@/script/converter/converter.module";
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    MongooseModule.forRoot(process.env.MONGO_URL!),
+    MongooseModule.forRoot(process.env.MONGO_URL),
   ],
 })
 export class AppModule {}

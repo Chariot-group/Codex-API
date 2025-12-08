@@ -12,6 +12,6 @@ export const swaggerConfig = new DocumentBuilder()
 
 export function setupSwagger(app: INestApplication) {
   return SwaggerModule.createDocument(app, swaggerConfig, {
-    extraModels: [ProblemDetailsDto, InvalidParamDto]
+    extraModels: [ProblemDetailsDto, InvalidParamDto],
   });
 }

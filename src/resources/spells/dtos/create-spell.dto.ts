@@ -5,16 +5,15 @@ import { Type } from "class-transformer";
 
 @ApiExtraModels(CreateSpellContentDto)
 export class CreateSpellDto {
+  @ApiProperty({ example: "en" })
+  @IsString()
+  @Matches(/^[a-z]{2}$/, {
+    message: "lang must be a 2-letter ISO code in lowercase (e.g., fr, en, es).",
+  })
+  lang: string;
 
-    @ApiProperty({ example: "en" })
-    @IsString()
-    @Matches(/^[a-z]{2}$/, {
-        message: "lang must be a 2-letter ISO code in lowercase (e.g., fr, en, es).",
-    })
-    lang: string;
-
-    @ApiProperty()
-    @ValidateNested()
-    @Type(() => CreateSpellContentDto)
-    spellContent: CreateSpellContentDto;
+  @ApiProperty()
+  @ValidateNested()
+  @Type(() => CreateSpellContentDto)
+  spellContent: CreateSpellContentDto;
 }

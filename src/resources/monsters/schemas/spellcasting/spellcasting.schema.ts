@@ -45,7 +45,8 @@ export class Spellcasting {
 
   @ApiProperty({
     type: [SpellFormattedDto],
-    description: "Array of populated spell objects with full details (in API responses). Note: stored as ObjectIds in database.",
+    description:
+      "Array of populated spell objects with full details (in API responses). Note: stored as ObjectIds in database.",
     example: [
       {
         srd: false,

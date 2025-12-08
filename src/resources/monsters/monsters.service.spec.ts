@@ -3,7 +3,14 @@ import { MonstersService } from "./monsters.service";
 import { getModelToken } from "@nestjs/mongoose";
 import { Monster } from "./schemas/monster.schema";
 import { Spell } from "../spells/schemas/spell.schema";
-import { InternalServerErrorException, NotFoundException, GoneException, BadRequestException } from "@nestjs/common";
+import {
+  InternalServerErrorException,
+  NotFoundException,
+  GoneException,
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { Types } from "mongoose";
 
 describe("MonstersService - create", () => {
@@ -915,6 +922,278 @@ describe("MonstersService - populateSpells", () => {
 
     expect(result).toEqual(monster);
     expect(errSpy).toHaveBeenCalled();
+
+    errSpy.mockRestore();
+  });
+});
+
+describe("MonstersService - addTranslation", () => {
+  let service: MonstersService;
+  let monsterModel: any;
+  let spellModel: any;
+
+  const id = new Types.ObjectId();
+
+  // Mock original content with all numeric values
+  const mockOriginalContent = {
+    name: "Goblin",
+    srd: false,
+    stats: {
+      size: 1,
+      maxHitPoints: 7,
+      currentHitPoints: 7,
+      armorClass: 15,
+      passivePerception: 9,
+      languages: ["Common", "Goblin"],
+    },
+    affinities: {
+      resistances: [],
+      immunities: [],
+    },
+    abilities: [{ name: "Nimble Escape", description: "Can Disengage or Hide as a bonus action" }],
+    actions: {
+      standard: [{ name: "Scimitar", description: "Melee attack", attackBonus: 4, damage: { dice: "1d6+2" } }],
+    },
+    profile: {
+      type: "Humanoid",
+      subtype: "goblinoid",
+      alignment: "Neutral Evil",
+    },
+    challenge: {
+      rating: 0.25,
+      xp: 50,
+    },
+  };
+
+  const mockMonster = {
+    _id: id,
+    tag: 0, // homebrew
+    languages: ["en"],
+    translations: new Map([["en", mockOriginalContent]]),
+    deletedAt: null,
+  };
+
+  // New DTO format - only text/translatable fields
+  const mockTranslationDto = {
+    name: "Gobelin",
+    stats: {
+      languages: ["Commun", "Gobelin"],
+    },
+    abilities: [{ name: "Évasion agile", description: "Peut se désengager ou se cacher comme action bonus" }],
+    actions: {
+      standard: [{ name: "Cimeterre", description: "Attaque de mêlée" }],
+    },
+    profile: {
+      type: "Humanoïde",
+      subtype: "gobelinoïde",
+      alignment: "Neutre Mauvais",
+    },
+  };
+
+  beforeEach(async () => {
+    monsterModel = {
+      findById: jest.fn().mockReturnThis(),
+      updateOne: jest.fn().mockReturnThis(),
+      exec: jest.fn(),
+    };
+
+    spellModel = {
+      find: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      exec: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        MonstersService,
+        { provide: getModelToken(Monster.name), useValue: monsterModel },
+        { provide: getModelToken(Spell.name), useValue: spellModel },
+      ],
+    }).compile();
+
+    service = module.get<MonstersService>(MonstersService);
+  });
+
+  it("should add a translation successfully", async () => {
+    monsterModel.findById = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({ ...mockMonster }),
+    });
+    monsterModel.updateOne = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({}),
+    });
+
+    const logSpy = jest.spyOn(service["logger"], "log").mockImplementation(() => {});
+
+    const result = await service.addTranslation(id, "fr", mockTranslationDto as any, false);
+
+    expect(result.data).toBeDefined();
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/Translation 'fr' added to monster/));
+
+    logSpy.mockRestore();
+  });
+
+  it("should throw BadRequestException for invalid language code", async () => {
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.addTranslation(id, "invalid", mockTranslationDto as any, false)).rejects.toThrow(
+      BadRequestException,
+    );
+
+    errSpy.mockRestore();
+  });
+
+  it("should throw BadRequestException for uppercase language code", async () => {
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.addTranslation(id, "FR", mockTranslationDto as any, false)).rejects.toThrow(
+      BadRequestException,
+    );
+
+    errSpy.mockRestore();
+  });
+
+  it("should throw NotFoundException if monster not found", async () => {
+    monsterModel.findById = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue(null),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.addTranslation(id, "fr", mockTranslationDto as any, false)).rejects.toThrow(NotFoundException);
+
+    errSpy.mockRestore();
+  });
+
+  it("should throw GoneException if monster is deleted", async () => {
+    monsterModel.findById = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({ ...mockMonster, deletedAt: new Date() }),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.addTranslation(id, "fr", mockTranslationDto as any, false)).rejects.toThrow(GoneException);
+
+    errSpy.mockRestore();
+  });
+
+  it("should throw ConflictException if translation already exists", async () => {
+    monsterModel.findById = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({
+        ...mockMonster,
+        translations: new Map([
+          ["en", mockOriginalContent],
+          ["fr", { ...mockOriginalContent, name: "Gobelin" }],
+        ]),
+      }),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.addTranslation(id, "fr", mockTranslationDto as any, false)).rejects.toThrow(ConflictException);
+
+    errSpy.mockRestore();
+  });
+
+  it("should throw ForbiddenException if non-admin tries to add translation to non-homebrew monster", async () => {
+    monsterModel.findById = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({
+        _id: id,
+        tag: 1, // non-homebrew
+        languages: ["en"],
+        translations: new Map([["en", mockOriginalContent]]),
+        deletedAt: null,
+      }),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.addTranslation(id, "es", mockTranslationDto as any, false)).rejects.toThrow(
+      ForbiddenException,
+    );
+
+    errSpy.mockRestore();
+  });
+
+  it("should allow admin to add translation to non-homebrew monster", async () => {
+    monsterModel.findById = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({
+        _id: id,
+        tag: 1, // non-homebrew
+        languages: ["en"],
+        translations: new Map([["en", mockOriginalContent]]),
+        deletedAt: null,
+      }),
+    });
+    monsterModel.updateOne = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({}),
+    });
+
+    const logSpy = jest.spyOn(service["logger"], "log").mockImplementation(() => {});
+
+    const result = await service.addTranslation(id, "pt", mockTranslationDto as any, true);
+
+    expect(result.data).toBeDefined();
+
+    logSpy.mockRestore();
+  });
+
+  it("should copy SRD status from original content", async () => {
+    const srdOriginalContent = { ...mockOriginalContent, srd: true };
+    monsterModel.findById = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({
+        ...mockMonster,
+        translations: new Map([["en", srdOriginalContent]]),
+      }),
+    });
+    monsterModel.updateOne = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({}),
+    });
+
+    const logSpy = jest.spyOn(service["logger"], "log").mockImplementation(() => {});
+
+    const result = await service.addTranslation(id, "fr", mockTranslationDto as any, false);
+
+    expect(result.data).toBeDefined();
+
+    logSpy.mockRestore();
+  });
+
+  it("should throw InternalServerErrorException on DB error", async () => {
+    monsterModel.findById = jest.fn().mockReturnValue({
+      exec: jest.fn().mockRejectedValue(new Error("DB fail")),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.addTranslation(id, "fr", mockTranslationDto as any, false)).rejects.toThrow(
+      InternalServerErrorException,
+    );
+
+    errSpy.mockRestore();
+  });
+
+  it("should rethrow HttpException errors", async () => {
+    const httpError = new NotFoundException("Custom not found");
+    monsterModel.findById = jest.fn().mockReturnValue({
+      exec: jest.fn().mockRejectedValue(httpError),
+    });
+
+    await expect(service.addTranslation(id, "fr", mockTranslationDto as any, false)).rejects.toThrow(NotFoundException);
+  });
+
+  it("should throw BadRequestException if monster has no original content", async () => {
+    monsterModel.findById = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({
+        ...mockMonster,
+        translations: new Map(), // Empty translations
+      }),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.addTranslation(id, "fr", mockTranslationDto as any, false)).rejects.toThrow(
+      BadRequestException,
+    );
 
     errSpy.mockRestore();
   });
