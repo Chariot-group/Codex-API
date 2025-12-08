@@ -10,7 +10,10 @@ RUN npm ci --include=dev
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN npm run build && \
+    echo "=== Checking build output ===" && \
+    ls -laR dist/ && \
+    echo "=== End build output ===" 
 
 # Production stage
 FROM node:20-alpine AS production
@@ -26,6 +29,6 @@ RUN npm ci --omit=dev
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
-CMD [ "node", "dist/main.js" ]
+CMD [ "node", "dist/src/main.js" ]
 
 EXPOSE ${API_PORT}
