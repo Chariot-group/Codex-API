@@ -8,7 +8,7 @@ export class MetaDataSchema {
    * @type number
    */
   @ApiProperty({ example: 1 })
-  @Prop({ required: true, default: true })
+  @Prop({ required: true, default: 0 })
   tag: number;
 
   /**

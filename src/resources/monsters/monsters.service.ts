@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   GoneException,
   HttpException,
@@ -21,6 +22,7 @@ import { SpellFormattedDto } from "@/common/dtos/spell-formatted.dto";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 import { UpdateMonsterDto } from "@/resources/monsters/dtos/update-monster.dto";
 import { UpdateMonsterTranslationDto } from "@/resources/monsters/dtos/update-monster-translation.dto";
+import { CreateMonsterTranslationDto } from "@/resources/monsters/dtos/create-monster-translation.dto";
 
 @Injectable()
 export class MonstersService {
@@ -108,9 +110,14 @@ export class MonstersService {
         spellsMap.set(spell._id.toString(), spell);
       });
 
+      // Handle both Map and plain object for translations
+      const translations = monster.translations;
+      const entries: [string, any][] =
+        translations instanceof Map ? Array.from(translations.entries()) : Object.entries(translations || {});
+
       // Populate spells in each translation
-      for (const [lang, content] of monster.translations) {
-        if (content.spellcasting && content.spellcasting.length > 0) {
+      for (const [lang, content] of entries) {
+        if (content && content.spellcasting && content.spellcasting.length > 0) {
           for (const spellcasting of content.spellcasting) {
             if (spellcasting.spells && spellcasting.spells.length > 0) {
               const populatedSpells: SpellFormattedDto[] = [];
@@ -169,19 +176,60 @@ export class MonstersService {
   private extractSpellIds(monster: Monster): Types.ObjectId[] {
     const spellIds: Types.ObjectId[] = [];
 
-    // Iterate through all translations
-    for (const [, content] of monster.translations) {
-      if (content.spellcasting && content.spellcasting.length > 0) {
-        for (const spellcasting of content.spellcasting) {
-          if (spellcasting.spells && spellcasting.spells.length > 0) {
-            spellIds.push(...spellcasting.spells);
+    try {
+      // Handle both Map and plain object for translations
+      const translations = monster.translations;
+      if (!translations) {
+        return [];
+      }
+
+      const entries: [string, any][] =
+        translations instanceof Map ? Array.from(translations.entries()) : Object.entries(translations);
+
+      // Iterate through all translations
+      for (const [, content] of entries) {
+        if (content && content.spellcasting && Array.isArray(content.spellcasting)) {
+          for (const spellcasting of content.spellcasting) {
+            if (spellcasting && spellcasting.spells && Array.isArray(spellcasting.spells)) {
+              for (const spell of spellcasting.spells) {
+                try {
+                  // Handle ObjectId
+                  if (spell instanceof Types.ObjectId) {
+                    spellIds.push(spell);
+                  }
+                  // Handle string that is a valid ObjectId
+                  else if (typeof spell === "string" && spell.length === 24 && Types.ObjectId.isValid(spell)) {
+                    spellIds.push(new Types.ObjectId(spell));
+                  }
+                  // Handle object with _id property (populated document)
+                  else if (spell && typeof spell === "object" && spell._id) {
+                    const idStr = String(spell._id);
+                    if (idStr.length === 24 && Types.ObjectId.isValid(idStr)) {
+                      spellIds.push(new Types.ObjectId(idStr));
+                    }
+                  }
+                  // Skip anything else (SpellFormattedDto, invalid data, etc.)
+                } catch {
+                  // Skip invalid spell IDs silently
+                }
+              }
+            }
           }
         }
       }
+    } catch (error) {
+      this.logger.error(`Error extracting spell IDs: ${error}`);
+      return [];
     }
 
-    // Remove duplicates by converting to Set and back to Array
-    return [...new Set(spellIds.map((id) => id.toString()))].map((id) => new Types.ObjectId(id));
+    // Remove duplicates
+    const seen = new Set<string>();
+    return spellIds.filter((id) => {
+      const idStr = id.toString();
+      if (seen.has(idStr)) return false;
+      seen.add(idStr);
+      return true;
+    });
   }
 
   async findAll(paginationMonster: PaginationMonster) {
@@ -439,6 +487,135 @@ export class MonstersService {
   }
 
   /**
+   * Add a new translation to an existing monster
+   * @param id Monster ID
+   * @param lang ISO 2 letter language code
+   * @param translationDto Translation data
+   * @param isAdmin Whether the user is an admin (can set srd: true)
+   * @returns IResponse<Monster> with the updated monster
+   */
+  async addTranslation(
+    id: Types.ObjectId,
+    lang: string,
+    translationDto: CreateMonsterTranslationDto,
+    isAdmin: boolean = false,
+  ): Promise<IResponse<Monster>> {
+    try {
+      // Validate language format
+      if (!/^[a-z]{2}$/.test(lang)) {
+        const message = `Invalid language code: ${lang}. Must be a 2-letter ISO code in lowercase (e.g., fr, en, es)`;
+        this.logger.error(message);
+        throw new BadRequestException(message);
+      }
+
+      // Find the monster
+      const monster: Monster = await this.monsterModel.findById(id).exec();
+
+      if (!monster) {
+        const message = `Monster #${id} not found`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      // Check if monster is deleted
+      if (monster.deletedAt) {
+        const message = `Monster #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      // Check if translation already exists
+      if (monster.translations.has(lang)) {
+        const message = `Translation for language '${lang}' already exists for monster #${id}`;
+        this.logger.error(message);
+        throw new ConflictException(message);
+      }
+
+      // Check permissions: if monster is not homebrew (tag != 0) and user is not admin
+      if (monster.tag !== 0 && !isAdmin) {
+        const message = `Only administrators can add translations to non-homebrew monsters`;
+        this.logger.error(message);
+        throw new ForbiddenException(message);
+      }
+
+      // Get the original content (use first available language as reference)
+      const originalLang = monster.languages[0];
+      const originalContent = monster.translations.get(originalLang);
+
+      if (!originalContent) {
+        const message = `Monster #${id} has no original content to translate from`;
+        this.logger.error(message);
+        throw new BadRequestException(message);
+      }
+
+      // Convert DTO to entity, merging text translations with original numeric values
+      const monsterContent: MonsterContent = this.mapper.dtoTranslationToEntity(translationDto, originalContent);
+
+      // Extract and validate all spell IDs from the new translation
+      const tempMonster = {
+        translations: new Map<string, MonsterContent>([[lang, monsterContent]]),
+      } as Monster;
+      const spellIds = this.extractSpellIds(tempMonster);
+      if (spellIds.length > 0) {
+        this.logger.log(`Validating ${spellIds.length} spell(s) for translation`);
+        await this.validateSpells(spellIds);
+      }
+
+      const start: number = Date.now();
+
+      // Add translation to monster
+      monster.translations.set(lang, monsterContent);
+
+      // Add language to languages array if not present
+      if (!monster.languages.includes(lang)) {
+        monster.languages.push(lang);
+      }
+
+      // Update the monster in database
+      await this.monsterModel
+        .updateOne(
+          { _id: id },
+          {
+            $set: {
+              [`translations.${lang}`]: monsterContent,
+              languages: monster.languages,
+              updatedAt: new Date(),
+            },
+          },
+        )
+        .exec();
+
+      const end: number = Date.now();
+
+      // Populate spells for response
+      const populatedMonster = await this.populateSpells(monster, lang);
+
+      // Convert Mongoose document to plain object to remove internal metadata
+      const plainMonster = populatedMonster.toObject ? populatedMonster.toObject() : { ...populatedMonster };
+
+      // Filter to only return the new translation (use plain object for JSON serialization)
+      const responseMonster = {
+        ...plainMonster,
+        translations: { [lang]: monsterContent },
+        languages: [lang],
+      };
+
+      const message: string = `Translation '${lang}' added to monster #${id} in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: responseMonster,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while adding translation to monster #${id}`;
+      this.logger.error(`${message}: ${error}`);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  /**
    * Update an existing translation for a monster
    * @param id Monster ID
    * @param lang Language code (ISO 2 letters)
@@ -582,18 +759,24 @@ export class MonstersService {
       // Populate spells with full data
       const populatedMonster = await this.populateSpells(updatedMonster, lang);
 
+      // Convert Mongoose document to plain object to remove internal metadata
+      const plainMonster = populatedMonster.toObject ? populatedMonster.toObject() : { ...populatedMonster };
+
       const message: string = `Translation '${lang}' for monster #${id} updated in ${end - start}ms`;
       this.logger.log(message);
 
-      // Filter to show only the updated translation
-      const filteredMonster = this.mapper.calculAvailablesLanguages(populatedMonster);
-      const updatedTranslation = filteredMonster.translations.get(lang);
-      filteredMonster.translations = new Map<string, MonsterContent>();
-      filteredMonster.translations.set(lang, updatedTranslation);
+      // Filter to show only the updated translation (use plain object for JSON serialization)
+      // After toObject(), translations is a plain object, not a Map
+      const updatedTranslation = plainMonster.translations[lang] || plainMonster.translations.get?.(lang);
+      const responseMonster = {
+        ...plainMonster,
+        translations: { [lang]: updatedTranslation },
+        languages: [lang],
+      };
 
       return {
         message,
-        data: filteredMonster,
+        data: responseMonster,
       };
     } catch (error) {
       if (error instanceof HttpException) throw error;

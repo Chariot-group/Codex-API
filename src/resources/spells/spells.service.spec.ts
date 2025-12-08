@@ -775,6 +775,147 @@ describe("SpellsService - findOneWithAllTranslations", () => {
   });
 });
 
+describe("SpellsService - updateTranslation", () => {
+  let service: SpellsService;
+  let spellModel: any;
+
+  const id = new Types.ObjectId();
+
+  const mockSpellWithNonSrdTranslation = {
+    _id: id,
+    tag: 0,
+    languages: ["en", "fr"],
+    translations: new Map([
+      ["en", { name: "Fireball", srd: false, deletedAt: null, components: ["V", "S", "M"] }],
+      ["fr", { name: "Boule de feu", srd: false, deletedAt: null, components: ["V", "S", "M"] }],
+    ]),
+    deletedAt: null,
+  };
+
+  const mockSpellWithSrdTranslation = {
+    _id: id,
+    tag: 1,
+    languages: ["en"],
+    translations: new Map([["en", { name: "Fireball", srd: true, deletedAt: null, components: ["V", "S", "M"] }]]),
+    deletedAt: null,
+  };
+
+  const mockSpellWithDeletedTranslation = {
+    _id: id,
+    tag: 0,
+    languages: ["en"],
+    translations: new Map([
+      ["en", { name: "Fireball", srd: false, deletedAt: new Date(), components: ["V", "S", "M"] }],
+    ]),
+    deletedAt: null,
+  };
+
+  beforeEach(async () => {
+    spellModel = {
+      findById: jest.fn().mockReturnThis(),
+      updateOne: jest.fn().mockReturnThis(),
+      exec: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [SpellsService, { provide: getModelToken(Spell.name), useValue: spellModel }],
+    }).compile();
+
+    service = module.get<SpellsService>(SpellsService);
+  });
+
+  it("should update a non-SRD translation successfully", async () => {
+    const updatedTranslation = { name: "Updated Fireball", srd: false, deletedAt: null };
+    const updatedSpell = {
+      ...mockSpellWithNonSrdTranslation,
+      translations: new Map([
+        ["en", updatedTranslation],
+        ["fr", { name: "Boule de feu", srd: false, deletedAt: null }],
+      ]),
+    };
+
+    spellModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValueOnce(mockSpellWithNonSrdTranslation).mockResolvedValueOnce(updatedSpell),
+    });
+    spellModel.updateOne.mockReturnValue({ exec: jest.fn().mockResolvedValue({}) });
+
+    const result = await service.updateTranslation(id, "en", { name: "Updated Fireball" });
+
+    expect(result.data.name).toBe("Updated Fireball");
+    expect(spellModel.updateOne).toHaveBeenCalled();
+  });
+
+  it("should throw NotFoundException if spell not found", async () => {
+    spellModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(null),
+    });
+
+    await expect(service.updateTranslation(id, "en", { name: "Test" })).rejects.toThrow(NotFoundException);
+  });
+
+  it("should throw GoneException if spell is deleted", async () => {
+    spellModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue({ ...mockSpellWithNonSrdTranslation, deletedAt: new Date() }),
+    });
+
+    await expect(service.updateTranslation(id, "en", { name: "Test" })).rejects.toThrow(GoneException);
+  });
+
+  it("should throw NotFoundException if translation does not exist", async () => {
+    spellModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(mockSpellWithNonSrdTranslation),
+    });
+
+    await expect(service.updateTranslation(id, "de", { name: "Test" })).rejects.toThrow(NotFoundException);
+  });
+
+  it("should throw GoneException if translation is deleted", async () => {
+    spellModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(mockSpellWithDeletedTranslation),
+    });
+
+    await expect(service.updateTranslation(id, "en", { name: "Test" })).rejects.toThrow(GoneException);
+  });
+
+  it("should throw InternalServerErrorException on DB error", async () => {
+    spellModel.findById.mockReturnValue({
+      exec: jest.fn().mockRejectedValue(new Error("DB fail")),
+    });
+
+    await expect(service.updateTranslation(id, "en", { name: "Test" })).rejects.toThrow(InternalServerErrorException);
+  });
+
+  it("should allow updating components with same count (localized names)", async () => {
+    const updatedTranslation = { name: "Boule de feu", srd: false, deletedAt: null, components: ["P", "G", "C"] };
+    const updatedSpell = {
+      ...mockSpellWithNonSrdTranslation,
+      translations: new Map([
+        ["en", { name: "Fireball", srd: false, deletedAt: null, components: ["V", "S", "M"] }],
+        ["fr", updatedTranslation],
+      ]),
+    };
+
+    spellModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValueOnce(mockSpellWithNonSrdTranslation).mockResolvedValueOnce(updatedSpell),
+    });
+    spellModel.updateOne.mockReturnValue({ exec: jest.fn().mockResolvedValue({}) });
+
+    const result = await service.updateTranslation(id, "fr", { components: ["P", "G", "C"] });
+
+    expect(result.data.components).toEqual(["P", "G", "C"]);
+    expect(spellModel.updateOne).toHaveBeenCalled();
+  });
+
+  it("should throw ForbiddenException when trying to change components count", async () => {
+    spellModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(mockSpellWithNonSrdTranslation),
+    });
+
+    // Trying to change from 3 components to 2
+    await expect(service.updateTranslation(id, "en", { components: ["V", "S"] })).rejects.toThrow(ForbiddenException);
+  });
+});
+
 describe("SpellsService - deleteTranslation", () => {
   let service: SpellsService;
   let spellModel: any;
