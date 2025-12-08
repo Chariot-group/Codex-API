@@ -30,6 +30,7 @@ import { PaginationSpell } from "@/resources/spells/dtos/find-all.dto";
 import { langParam } from "@/resources/spells/dtos/find-one.dto";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 import { UpdateSpellDto } from "@/resources/spells/dtos/update-spell.dto";
+import { UpdateSpellTranslationDto } from "@/resources/spells/dtos/update-spell-translation.dto";
 import { CreateSpellDto } from "@/resources/spells/dtos/create-spell.dto";
 import { CreateSpellTranslationDto } from "@/resources/spells/dtos/create-spell-translation.dto";
 import { ProblemDetailsDto } from "@/common/dtos/errors.dto";
@@ -400,7 +401,7 @@ export class SpellsController {
     return this.spellsService.addTranslation(id, lang, translationDto, isAdmin);
   }
 
-  /**
+/**
    * Validate resource exists and return it with all translations
    * @param id Resource ID
    * @returns object Spell with all translations
@@ -414,6 +415,70 @@ export class SpellsController {
     // Get spell with all translations for validation
     const result = await this.spellsService.findOneWithAllTranslations(id);
     return result;
+  }
+
+  @Patch(":id/translations/:lang")
+  @ApiOperation({ summary: "Update a specific translation of a spell" })
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the spell",
+    example: "507f1f77bcf86cd799439011",
+  })
+  @ApiParam({
+    name: "lang",
+    type: String,
+    required: true,
+    description: "The ISO 2-letter code of the language to update",
+    example: "en",
+  })
+  @ApiOkResponse({
+    description: "Translation updated successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(IResponse) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(SpellContent) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Validation error or invalid language code",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Cannot modify components count (must remain consistent across translations)",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Spell or translation not found",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 410,
+    description: "Spell or translation has been deleted",
+    type: ProblemDetailsDto,
+  })
+  async updateTranslation(
+    @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
+    @Param("lang") lang: string,
+    @Body() updateData: UpdateSpellTranslationDto,
+  ): Promise<IResponse<SpellContent>> {
+    // Validate lang parameter (must be 2 lowercase letters)
+    if (!/^[a-z]{2}$/.test(lang)) {
+      const message = `Invalid language code '${lang}': must be a 2-letter ISO code in lowercase`;
+      this.logger.error(message);
+      throw new BadRequestException(message);
+    }
+
+    return this.spellsService.updateTranslation(id, lang, updateData);
   }
 
   @Delete(":id/translations/:lang")
