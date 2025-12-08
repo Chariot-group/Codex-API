@@ -11,7 +11,15 @@ import {
   Delete,
   ForbiddenException,
 } from "@nestjs/common";
-import { ApiOperation, ApiResponse, ApiOkResponse, ApiExtraModels, getSchemaPath, ApiParam } from "@nestjs/swagger";
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiOkResponse,
+  ApiExtraModels,
+  getSchemaPath,
+  ApiParam,
+  ApiCreatedResponse,
+} from "@nestjs/swagger";
 import { SpellsService } from "@/resources/spells/spells.service";
 import { Types } from "mongoose";
 import { Spell } from "@/resources/spells/schemas/spell.schema";
@@ -22,6 +30,7 @@ import { langParam } from "@/resources/spells/dtos/find-one.dto";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 import { UpdateSpellDto } from "@/resources/spells/dtos/update-spell.dto";
 import { CreateSpellDto } from "@/resources/spells/dtos/create-spell.dto";
+import { CreateSpellTranslationDto } from "@/resources/spells/dtos/create-spell-translation.dto";
 import { ProblemDetailsDto } from "@/common/dtos/errors.dto";
 
 @ApiExtraModels(Spell, SpellContent, IResponse, IPaginatedResponse)
@@ -225,5 +234,63 @@ export class SpellsController {
     }
 
     return this.spellsService.delete(id, spell.data);
+  }
+
+  @Post(":id/translations/:lang")
+  @ApiOperation({ summary: "Add a new translation to an existing spell" })
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the spell to add translation to",
+    example: "507f1f77bcf86cd799439011",
+  })
+  @ApiParam({
+    name: "lang",
+    type: String,
+    required: true,
+    description: "The ISO 2-letter language code in lowercase",
+    example: "fr",
+  })
+  @ApiCreatedResponse({
+    description: "Translation added successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(IResponse) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(Spell) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Validation error or invalid language code",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: "User does not have permission to add translation",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({ status: 404, description: "Spell #ID not found", type: ProblemDetailsDto })
+  @ApiResponse({
+    status: 409,
+    description: "Translation for this language already exists",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({ status: 410, description: "Spell #ID has been deleted", type: ProblemDetailsDto })
+  async addTranslation(
+    @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
+    @Param("lang") lang: string,
+    @Body() translationDto: CreateSpellTranslationDto,
+  ): Promise<IResponse<Spell>> {
+    // TODO: Implement authentication/authorization to determine if user is admin
+    // For now, we'll determine based on the srd flag and spell tag
+    const isAdmin = false; // This should come from auth guard/decorator
+
+    return this.spellsService.addTranslation(id, lang, translationDto, isAdmin);
   }
 }

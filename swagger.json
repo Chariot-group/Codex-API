@@ -382,6 +382,120 @@
         ]
       }
     },
+    "/spells/{id}/translations/{lang}": {
+      "post": {
+        "operationId": "SpellsController_addTranslation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the spell to add translation to",
+            "schema": {
+              "example": "507f1f77bcf86cd799439011",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lang",
+            "required": true,
+            "in": "path",
+            "description": "The ISO 2-letter language code in lowercase",
+            "schema": {
+              "example": "fr",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSpellTranslationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Translation added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Spell"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or invalid language code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to add translation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Spell #ID not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Translation for this language already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Spell #ID has been deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Add a new translation to an existing spell",
+        "tags": [
+          "Spells"
+        ]
+      }
+    },
     "/monsters": {
       "get": {
         "operationId": "MonstersController_findAll",
@@ -820,12 +934,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T14:45:25.373Z"
+            "example": "2025-12-08T13:12:26.750Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T14:45:25.373Z"
+            "example": "2025-12-08T13:12:26.750Z"
           },
           "name": {
             "type": "string",
@@ -1145,6 +1259,83 @@
         "required": [
           "lang",
           "spellContent"
+        ]
+      },
+      "CreateSpellTranslationDto": {
+        "type": "object",
+        "properties": {
+          "srd": {
+            "type": "boolean",
+            "example": false,
+            "description": "Indicates if this translation is from SRD (only admins can set true)"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fireball"
+          },
+          "description": {
+            "type": "string",
+            "example": "A bright streak flashes from your pointing finger to a point you choose within range."
+          },
+          "level": {
+            "type": "number",
+            "example": 3,
+            "description": "Spell level (0-9)"
+          },
+          "school": {
+            "type": "string",
+            "example": "Evocation"
+          },
+          "castingTime": {
+            "type": "string",
+            "example": "1 action"
+          },
+          "range": {
+            "type": "string",
+            "example": "150 feet"
+          },
+          "components": {
+            "example": [
+              "V",
+              "S",
+              "M"
+            ],
+            "description": "Spell components. Can be localized (e.g., V/S/M in English, P/G/C in French). Maximum 3 components.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "duration": {
+            "type": "string",
+            "example": "Instantaneous"
+          },
+          "effectType": {
+            "type": "number",
+            "example": 0
+          },
+          "damage": {
+            "type": "string",
+            "example": "8d6"
+          },
+          "healing": {
+            "type": "string",
+            "example": "Heal 4d8 + spellcasting modifier"
+          }
+        },
+        "required": [
+          "srd",
+          "name",
+          "description",
+          "level",
+          "school",
+          "castingTime",
+          "range",
+          "components",
+          "duration",
+          "effectType",
+          "damage",
+          "healing"
         ]
       },
       "Speed": {
@@ -1635,12 +1826,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T14:45:25.955Z"
+            "example": "2025-12-08T13:12:27.326Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T14:45:25.955Z"
+            "example": "2025-12-08T13:12:27.326Z"
           },
           "name": {
             "type": "string",

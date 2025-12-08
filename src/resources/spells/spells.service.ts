@@ -1,4 +1,7 @@
 import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
   GoneException,
   HttpException,
   Injectable,
@@ -14,6 +17,7 @@ import { PaginationSpell } from "@/resources/spells/dtos/find-all.dto";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 import { UpdateSpellDto } from "@/resources/spells/dtos/update-spell.dto";
 import { CreateSpellDto } from "@/resources/spells/dtos/create-spell.dto";
+import { CreateSpellTranslationDto } from "@/resources/spells/dtos/create-spell-translation.dto";
 import { SpellsMapper } from "@/resources/spells/mappers/spells.mapper";
 
 @Injectable()
@@ -235,6 +239,136 @@ export class SpellsService {
     } catch (error) {
       if (error instanceof HttpException) throw error;
       const message: string = `Error while deleting spell #${id}`;
+      this.logger.error(`${message}: ${error}`);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  async addTranslation(
+    id: Types.ObjectId,
+    lang: string,
+    translationDto: CreateSpellTranslationDto,
+    isAdmin: boolean = false,
+  ): Promise<IResponse<Spell>> {
+    try {
+      // Validate language format
+      if (!/^[a-z]{2}$/.test(lang)) {
+        const message = `Language code '${lang}' must be a 2-letter ISO code in lowercase (e.g., fr, en, es)`;
+        this.logger.error(message);
+        throw new ForbiddenException(message);
+      }
+
+      const spell: Spell = await this.spellModel.findById(id).exec();
+
+      if (!spell) {
+        const message = `Spell #${id} not found`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      if (spell.deletedAt) {
+        const message = `Spell #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      if (spell.languages.includes(lang)) {
+        const message = `Translation for language '${lang}' already exists for spell #${id}`;
+        this.logger.error(message);
+        throw new ConflictException(message);
+      }
+
+      // Validate components count consistency with existing translations
+      const existingTranslation = spell.translations.values().next().value as SpellContent;
+      if (existingTranslation && existingTranslation.components) {
+        const existingCount = existingTranslation.components.length;
+        const newCount = translationDto.components.length;
+        if (existingCount !== newCount) {
+          const message = `Components count mismatch: new translation has ${newCount} component(s) but existing translations have ${existingCount} component(s)`;
+          this.logger.error(message);
+          throw new BadRequestException(message);
+        }
+      }
+
+      // Check permissions for homebrew spells (tag=0)
+      const requestedSrd = translationDto.srd ?? false;
+
+      if (spell.tag === 0) {
+        // For homebrew, user must be creator (not implemented yet) or admin
+        // For now, allow but enforce srd: false for non-admins
+        if (!isAdmin && requestedSrd) {
+          const message = `Only administrators can create SRD translations for spell #${id}`;
+          this.logger.error(message);
+          throw new ForbiddenException(message);
+        }
+      } else {
+        // For official spells (tag=1), only admins can add translations
+        if (!isAdmin) {
+          const message = `Only administrators can add translations to official spells (spell #${id})`;
+          this.logger.error(message);
+          throw new ForbiddenException(message);
+        }
+      }
+
+      // Create the translation content
+      const translationContent: SpellContent = new SpellContent();
+      translationContent.srd = requestedSrd;
+      translationContent.name = translationDto.name;
+      translationContent.description = translationDto.description;
+      translationContent.level = translationDto.level;
+      translationContent.school = translationDto.school;
+      translationContent.castingTime = translationDto.castingTime;
+      translationContent.range = translationDto.range;
+      translationContent.components = translationDto.components;
+      translationContent.duration = translationDto.duration;
+      translationContent.effectType = translationDto.effectType;
+      translationContent.damage = translationDto.damage;
+      translationContent.healing = translationDto.healing;
+      translationContent.createdAt = new Date();
+      translationContent.updatedAt = new Date();
+      translationContent.deletedAt = null;
+
+      const start: number = Date.now();
+
+      // Add the translation to the translations map
+      const updateQuery: any = {
+        $set: {
+          [`translations.${lang}`]: translationContent,
+        },
+        $addToSet: {
+          languages: lang,
+        },
+        updatedAt: new Date(),
+      };
+
+      // If adding an SRD translation to a homebrew spell, update tag to 1
+      if (requestedSrd && spell.tag === 0) {
+        updateQuery.$set.tag = 1;
+      }
+
+      await this.spellModel.updateOne({ _id: id }, updateQuery).exec();
+
+      const end: number = Date.now();
+
+      // Fetch updated spell
+      const updatedSpell: Spell = await this.spellModel.findById(id).exec();
+
+      const message: string = `Translation '${lang}' added to spell #${id} in ${end - start}ms`;
+      this.logger.log(message);
+
+      // Filter to show only the newly added translation
+      const filteredSpell = this.mapper.calculAvailablesLanguages(updatedSpell);
+      const newTranslation = filteredSpell.translations.get(lang);
+      filteredSpell.translations = new Map<string, SpellContent>();
+      filteredSpell.translations.set(lang, newTranslation);
+
+      return {
+        message,
+        data: filteredSpell,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while adding translation to spell #${id}`;
       this.logger.error(`${message}: ${error}`);
       throw new InternalServerErrorException(message);
     }
