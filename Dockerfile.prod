@@ -13,7 +13,9 @@ COPY . .
 RUN npm run build && \
     echo "=== Checking build output ===" && \
     ls -laR dist/ && \
-    echo "=== End build output ===" 
+    echo "=== End build output ===" && \
+    mkdir -p dist/src/script/output && \
+    cp src/script/output/*.json dist/src/script/output/
 
 # Production stage
 FROM node:20-alpine AS production

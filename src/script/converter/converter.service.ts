@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { readFile } from "fs/promises";
+import { join } from "path";
 import { Spell } from "@/resources/spells/schemas/spell.schema";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 import { Monster } from "@/resources/monsters/schemas/monster.schema";
@@ -29,7 +30,11 @@ export class ConverterService {
   ) {}
 
   async launch(resource: string): Promise<void> {
-    const inputPath = `./src/script/output/${resource}.json`;
+    // Chemin qui fonctionne en dev (./src) et en prod (./dist/src)
+    const basePath = process.env.NODE_ENV === 'production' 
+      ? join(process.cwd(), 'dist', 'src', 'script', 'output')
+      : join(process.cwd(), 'src', 'script', 'output');
+    const inputPath = join(basePath, `${resource}.json`);
 
     Logger.log(`Lecture depuis ${inputPath}...`, this.SERVICE_NAME);
     const file = await readFile(inputPath, "utf-8");
