@@ -1133,6 +1133,100 @@
           "Monsters"
         ]
       }
+    },
+    "/monsters/{id}/translations/{lang}": {
+      "delete": {
+        "operationId": "MonstersController_deleteTranslation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the monster",
+            "schema": {
+              "example": "507f1f77bcf86cd799439011",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lang",
+            "required": true,
+            "in": "path",
+            "description": "The ISO 2 letter code of the language to delete",
+            "schema": {
+              "example": "fr",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Translation deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/DeleteTranslationResponseDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid monster ID or language code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cannot delete SRD translation or last active translation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Monster or translation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Monster or translation has been deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Delete a specific translation of a monster",
+        "tags": [
+          "Monsters"
+        ]
+      }
     }
   },
   "info": {
@@ -1171,12 +1265,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-08T15:53:12.031Z"
+            "example": "2025-12-08T17:03:09.042Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-08T15:53:12.031Z"
+            "example": "2025-12-08T17:03:09.042Z"
           },
           "name": {
             "type": "string",
@@ -1344,15 +1438,18 @@
       "DeleteTranslationResponseDto": {
         "type": "object",
         "properties": {
-          "message": {
+          "monsterId": {
             "type": "string",
-            "example": "Translation 'fr' for spell #507f1f77bcf86cd799439011 deleted successfully"
+            "description": "The ID of the monster",
+            "example": "507f1f77bcf86cd799439011"
           },
-          "deletedLanguage": {
+          "deletedLang": {
             "type": "string",
+            "description": "The language code that was deleted",
             "example": "fr"
           },
           "remainingLanguages": {
+            "description": "Remaining languages after deletion",
             "example": [
               "en",
               "es"
@@ -1364,8 +1461,8 @@
           }
         },
         "required": [
-          "message",
-          "deletedLanguage",
+          "monsterId",
+          "deletedLang",
           "remainingLanguages"
         ]
       },
@@ -1390,13 +1487,13 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-08T15:53:12.141Z",
+            "example": "2025-12-08T17:03:09.151Z",
             "description": "Creation date of this translation"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-08T15:53:12.141Z",
+            "example": "2025-12-08T17:03:09.151Z",
             "description": "Last update date of this translation"
           }
         },
@@ -2157,12 +2254,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-08T15:53:12.584Z"
+            "example": "2025-12-08T17:03:09.594Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-08T15:53:12.584Z"
+            "example": "2025-12-08T17:03:09.594Z"
           },
           "name": {
             "type": "string",
