@@ -1,9 +1,17 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { SpellsService } from "./spells.service";
 import { getModelToken } from "@nestjs/mongoose";
-import { Spell } from "./schemas/spell.schema";
-import { InternalServerErrorException, NotFoundException, GoneException, ForbiddenException } from "@nestjs/common";
+import { Spell } from "@/resources/spells/schemas/spell.schema";
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+  GoneException,
+  ConflictException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { Types } from "mongoose";
+import { CreateSpellTranslationDto } from "@/resources/spells/dtos/create-spell-translation.dto";
 
 describe("SpellsService - create", () => {
   let service: SpellsService;
@@ -319,6 +327,166 @@ describe("SpellsService - delete", () => {
   });
 });
 
+describe("SpellsService - addTranslation", () => {
+  let service: SpellsService;
+  let spellModel: any;
+
+  const id = new Types.ObjectId();
+
+  const mockSpell = {
+    _id: id,
+    tag: 0,
+    languages: ["en"],
+    translations: new Map([["en", { name: "Fireball", srd: false }]]),
+    deletedAt: null,
+  };
+
+  const mockTranslationDto: CreateSpellTranslationDto = {
+    srd: false,
+    name: "Boule de feu",
+    description: "Une boule de feu explose...",
+    level: 3,
+    school: "Évocation",
+    castingTime: "1 action",
+    range: "45 mètres",
+    components: ["V", "S", "M"],
+    duration: "Instantanée",
+    effectType: 0,
+    damage: "8d6",
+  };
+
+  beforeEach(async () => {
+    spellModel = {
+      findById: jest.fn().mockReturnThis(),
+      updateOne: jest.fn().mockReturnThis(),
+      exec: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [SpellsService, { provide: getModelToken(Spell.name), useValue: spellModel }],
+    }).compile();
+
+    service = module.get<SpellsService>(SpellsService);
+  });
+
+  it("should add a translation to a homebrew spell (non-admin)", async () => {
+    spellModel.exec
+      .mockResolvedValueOnce(mockSpell)
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ ...mockSpell, languages: ["en", "fr"] });
+
+    const result = await service.addTranslation(id, "fr", mockTranslationDto, false);
+
+    expect(spellModel.findById).toHaveBeenCalledWith(id);
+    expect(spellModel.updateOne).toHaveBeenCalled();
+    expect(result.message).toContain("Translation 'fr' added to spell");
+  });
+
+  it("should throw ForbiddenException if lang format is invalid", async () => {
+    await expect(service.addTranslation(id, "FRA", mockTranslationDto, false)).rejects.toThrow(ForbiddenException);
+
+    await expect(service.addTranslation(id, "f", mockTranslationDto, false)).rejects.toThrow(ForbiddenException);
+  });
+
+  it("should throw NotFoundException if spell not found", async () => {
+    spellModel.exec.mockResolvedValueOnce(null);
+
+    await expect(service.addTranslation(id, "fr", mockTranslationDto, false)).rejects.toThrow(NotFoundException);
+  });
+
+  it("should throw GoneException if spell is deleted", async () => {
+    spellModel.exec.mockResolvedValueOnce({ ...mockSpell, deletedAt: new Date() });
+
+    await expect(service.addTranslation(id, "fr", mockTranslationDto, false)).rejects.toThrow(GoneException);
+  });
+
+  it("should throw ConflictException if translation already exists", async () => {
+    spellModel.exec.mockResolvedValueOnce(mockSpell);
+
+    await expect(service.addTranslation(id, "en", mockTranslationDto, false)).rejects.toThrow(ConflictException);
+  });
+
+  it("should throw ForbiddenException if non-admin tries to add SRD translation to homebrew", async () => {
+    spellModel.exec.mockResolvedValueOnce(mockSpell);
+
+    const srdTranslation = { ...mockTranslationDto, srd: true };
+
+    await expect(service.addTranslation(id, "fr", srdTranslation, false)).rejects.toThrow(ForbiddenException);
+  });
+
+  it("should allow admin to add SRD translation to homebrew spell", async () => {
+    spellModel.exec
+      .mockResolvedValueOnce(mockSpell)
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ ...mockSpell, tag: 1, languages: ["en", "fr"] });
+
+    const srdTranslation = { ...mockTranslationDto, srd: true };
+
+    const result = await service.addTranslation(id, "fr", srdTranslation, true);
+
+    expect(result.message).toContain("Translation 'fr' added to spell");
+  });
+
+  it("should throw ForbiddenException if non-admin tries to add translation to official spell", async () => {
+    const officialSpell = { ...mockSpell, tag: 1 };
+    spellModel.exec.mockResolvedValueOnce(officialSpell);
+
+    await expect(service.addTranslation(id, "fr", mockTranslationDto, false)).rejects.toThrow(ForbiddenException);
+  });
+
+  it("should allow admin to add translation to official spell", async () => {
+    const officialSpell = { ...mockSpell, tag: 1 };
+    spellModel.exec
+      .mockResolvedValueOnce(officialSpell)
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ ...officialSpell, languages: ["en", "fr"] });
+
+    const result = await service.addTranslation(id, "fr", mockTranslationDto, true);
+
+    expect(result.message).toContain("Translation 'fr' added to spell");
+  });
+
+  it("should throw InternalServerErrorException on database error", async () => {
+    spellModel.exec.mockRejectedValueOnce(new Error("DB error"));
+
+    await expect(service.addTranslation(id, "fr", mockTranslationDto, false)).rejects.toThrow(
+      InternalServerErrorException,
+    );
+  });
+
+  it("should throw BadRequestException if components count does not match existing translations", async () => {
+    const spellWithDifferentComponentsCount = {
+      ...mockSpell,
+      translations: new Map([["en", { name: "Fireball", srd: false, components: ["V", "S"] }]]),
+    };
+    spellModel.exec.mockResolvedValueOnce(spellWithDifferentComponentsCount);
+
+    // mockTranslationDto has 3 components: ["V", "S", "M"] but existing has 2: ["V", "S"]
+    await expect(service.addTranslation(id, "fr", mockTranslationDto, false)).rejects.toThrow(BadRequestException);
+  });
+
+  it("should accept translation with same component count but different values", async () => {
+    const spellWithSameComponentCount = {
+      ...mockSpell,
+      translations: new Map([["en", { name: "Fireball", srd: false, components: ["V", "S", "M"] }]]),
+    };
+    spellModel.exec
+      .mockResolvedValueOnce(spellWithSameComponentCount)
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ ...spellWithSameComponentCount, languages: ["en", "fr"] });
+
+    // Different component values but same count (3)
+    const translationWithDifferentComponentValues = {
+      ...mockTranslationDto,
+      components: ["P", "G", "C"], // French equivalents for example
+    };
+
+    const result = await service.addTranslation(id, "fr", translationWithDifferentComponentValues, false);
+
+    expect(result.message).toContain("Translation 'fr' added to spell");
+  });
+});
+
 describe("SpellsService - updateTranslation", () => {
   let service: SpellsService;
   let spellModel: any;
@@ -330,8 +498,8 @@ describe("SpellsService - updateTranslation", () => {
     tag: 0,
     languages: ["en", "fr"],
     translations: new Map([
-      ["en", { name: "Fireball", srd: false, deletedAt: null }],
-      ["fr", { name: "Boule de feu", srd: false, deletedAt: null }],
+      ["en", { name: "Fireball", srd: false, deletedAt: null, components: ["V", "S", "M"] }],
+      ["fr", { name: "Boule de feu", srd: false, deletedAt: null, components: ["V", "S", "M"] }],
     ]),
     deletedAt: null,
   };
@@ -340,7 +508,7 @@ describe("SpellsService - updateTranslation", () => {
     _id: id,
     tag: 1,
     languages: ["en"],
-    translations: new Map([["en", { name: "Fireball", srd: true, deletedAt: null }]]),
+    translations: new Map([["en", { name: "Fireball", srd: true, deletedAt: null, components: ["V", "S", "M"] }]]),
     deletedAt: null,
   };
 
@@ -348,7 +516,9 @@ describe("SpellsService - updateTranslation", () => {
     _id: id,
     tag: 0,
     languages: ["en"],
-    translations: new Map([["en", { name: "Fireball", srd: false, deletedAt: new Date() }]]),
+    translations: new Map([
+      ["en", { name: "Fireball", srd: false, deletedAt: new Date(), components: ["V", "S", "M"] }],
+    ]),
     deletedAt: null,
   };
 
@@ -381,37 +551,10 @@ describe("SpellsService - updateTranslation", () => {
     });
     spellModel.updateOne.mockReturnValue({ exec: jest.fn().mockResolvedValue({}) });
 
-    const result = await service.updateTranslation(id, "en", { name: "Updated Fireball" }, false);
+    const result = await service.updateTranslation(id, "en", { name: "Updated Fireball" });
 
     expect(result.data.name).toBe("Updated Fireball");
     expect(spellModel.updateOne).toHaveBeenCalled();
-  });
-
-  it("should update an SRD translation when user is admin", async () => {
-    const updatedTranslation = { name: "Updated Fireball", srd: true, deletedAt: null };
-    const updatedSpell = {
-      ...mockSpellWithSrdTranslation,
-      translations: new Map([["en", updatedTranslation]]),
-    };
-
-    spellModel.findById.mockReturnValue({
-      exec: jest.fn().mockResolvedValueOnce(mockSpellWithSrdTranslation).mockResolvedValueOnce(updatedSpell),
-    });
-    spellModel.updateOne.mockReturnValue({ exec: jest.fn().mockResolvedValue({}) });
-
-    const result = await service.updateTranslation(id, "en", { name: "Updated Fireball" }, true);
-
-    expect(result.data.name).toBe("Updated Fireball");
-  });
-
-  it("should throw ForbiddenException when non-admin tries to update SRD translation", async () => {
-    spellModel.findById.mockReturnValue({
-      exec: jest.fn().mockResolvedValue(mockSpellWithSrdTranslation),
-    });
-
-    await expect(service.updateTranslation(id, "en", { name: "Updated Fireball" }, false)).rejects.toThrow(
-      ForbiddenException,
-    );
   });
 
   it("should throw NotFoundException if spell not found", async () => {
@@ -419,7 +562,7 @@ describe("SpellsService - updateTranslation", () => {
       exec: jest.fn().mockResolvedValue(null),
     });
 
-    await expect(service.updateTranslation(id, "en", { name: "Test" }, false)).rejects.toThrow(NotFoundException);
+    await expect(service.updateTranslation(id, "en", { name: "Test" })).rejects.toThrow(NotFoundException);
   });
 
   it("should throw GoneException if spell is deleted", async () => {
@@ -427,7 +570,7 @@ describe("SpellsService - updateTranslation", () => {
       exec: jest.fn().mockResolvedValue({ ...mockSpellWithNonSrdTranslation, deletedAt: new Date() }),
     });
 
-    await expect(service.updateTranslation(id, "en", { name: "Test" }, false)).rejects.toThrow(GoneException);
+    await expect(service.updateTranslation(id, "en", { name: "Test" })).rejects.toThrow(GoneException);
   });
 
   it("should throw NotFoundException if translation does not exist", async () => {
@@ -435,7 +578,7 @@ describe("SpellsService - updateTranslation", () => {
       exec: jest.fn().mockResolvedValue(mockSpellWithNonSrdTranslation),
     });
 
-    await expect(service.updateTranslation(id, "de", { name: "Test" }, false)).rejects.toThrow(NotFoundException);
+    await expect(service.updateTranslation(id, "de", { name: "Test" })).rejects.toThrow(NotFoundException);
   });
 
   it("should throw GoneException if translation is deleted", async () => {
@@ -443,7 +586,7 @@ describe("SpellsService - updateTranslation", () => {
       exec: jest.fn().mockResolvedValue(mockSpellWithDeletedTranslation),
     });
 
-    await expect(service.updateTranslation(id, "en", { name: "Test" }, false)).rejects.toThrow(GoneException);
+    await expect(service.updateTranslation(id, "en", { name: "Test" })).rejects.toThrow(GoneException);
   });
 
   it("should throw InternalServerErrorException on DB error", async () => {
@@ -451,8 +594,36 @@ describe("SpellsService - updateTranslation", () => {
       exec: jest.fn().mockRejectedValue(new Error("DB fail")),
     });
 
-    await expect(service.updateTranslation(id, "en", { name: "Test" }, false)).rejects.toThrow(
-      InternalServerErrorException,
-    );
+    await expect(service.updateTranslation(id, "en", { name: "Test" })).rejects.toThrow(InternalServerErrorException);
+  });
+
+  it("should allow updating components with same count (localized names)", async () => {
+    const updatedTranslation = { name: "Boule de feu", srd: false, deletedAt: null, components: ["P", "G", "C"] };
+    const updatedSpell = {
+      ...mockSpellWithNonSrdTranslation,
+      translations: new Map([
+        ["en", { name: "Fireball", srd: false, deletedAt: null, components: ["V", "S", "M"] }],
+        ["fr", updatedTranslation],
+      ]),
+    };
+
+    spellModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValueOnce(mockSpellWithNonSrdTranslation).mockResolvedValueOnce(updatedSpell),
+    });
+    spellModel.updateOne.mockReturnValue({ exec: jest.fn().mockResolvedValue({}) });
+
+    const result = await service.updateTranslation(id, "fr", { components: ["P", "G", "C"] });
+
+    expect(result.data.components).toEqual(["P", "G", "C"]);
+    expect(spellModel.updateOne).toHaveBeenCalled();
+  });
+
+  it("should throw ForbiddenException when trying to change components count", async () => {
+    spellModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(mockSpellWithNonSrdTranslation),
+    });
+
+    // Trying to change from 3 components to 2
+    await expect(service.updateTranslation(id, "en", { components: ["V", "S"] })).rejects.toThrow(ForbiddenException);
   });
 });
