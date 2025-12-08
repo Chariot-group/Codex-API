@@ -10,6 +10,7 @@ import {
   Post,
   Delete,
   ForbiddenException,
+  GoneException,
 } from "@nestjs/common";
 import {
   ApiOperation,
@@ -32,6 +33,7 @@ import { UpdateSpellDto } from "@/resources/spells/dtos/update-spell.dto";
 import { CreateSpellDto } from "@/resources/spells/dtos/create-spell.dto";
 import { CreateSpellTranslationDto } from "@/resources/spells/dtos/create-spell-translation.dto";
 import { ProblemDetailsDto } from "@/common/dtos/errors.dto";
+import { DeleteTranslationResponseDto } from "@/resources/spells/dtos/delete-translation.dto";
 import {
   SpellTranslationSummaryDto,
   SpellTranslationsListDto,
@@ -42,6 +44,7 @@ import {
   SpellContent,
   IResponse,
   IPaginatedResponse,
+  DeleteTranslationResponseDto,
   SpellTranslationSummaryDto,
   SpellTranslationsListDto,
 )
@@ -395,5 +398,85 @@ export class SpellsController {
     const isAdmin = false; // This should come from auth guard/decorator
 
     return this.spellsService.addTranslation(id, lang, translationDto, isAdmin);
+  }
+
+  /**
+   * Validate resource exists and return it with all translations
+   * @param id Resource ID
+   * @returns object Spell with all translations
+   */
+  private async validateResourceWithAllTranslations(id: Types.ObjectId): Promise<Spell> {
+    if (!Types.ObjectId.isValid(id)) {
+      const message = `Error while fetching spell #${id}: Id is not a valid mongoose id`;
+      this.logger.error(message);
+      throw new BadRequestException(message);
+    }
+    // Get spell with all translations for validation
+    const result = await this.spellsService.findOneWithAllTranslations(id);
+    return result;
+  }
+
+  @Delete(":id/translations/:lang")
+  @ApiOperation({ summary: "Delete a specific translation for a spell" })
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the spell",
+    example: "507f1f77bcf86cd799439011",
+  })
+  @ApiParam({
+    name: "lang",
+    type: String,
+    required: true,
+    description: "The ISO 2-letter code of the language to delete",
+    example: "fr",
+  })
+  @ApiOkResponse({
+    description: "Translation deleted successfully",
+    type: DeleteTranslationResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Invalid spell ID or language code",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Cannot delete SRD translation or last active translation",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Spell or translation not found",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 410,
+    description: "Spell or translation has been deleted",
+    type: ProblemDetailsDto,
+  })
+  async deleteTranslation(
+    @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
+    @Param("lang") lang: string,
+  ): Promise<DeleteTranslationResponseDto> {
+    // Validate language code format
+    if (!/^[a-z]{2}$/.test(lang)) {
+      const message = `Invalid language code '${lang}': must be a 2-letter ISO code in lowercase`;
+      this.logger.error(message);
+      throw new BadRequestException(message);
+    }
+
+    // Get spell with all translations
+    const spell = await this.validateResourceWithAllTranslations(id);
+
+    // Check if spell is deleted
+    if (spell.deletedAt) {
+      const message = `Spell #${id} has been deleted`;
+      this.logger.error(message);
+      throw new GoneException(message);
+    }
+
+    return this.spellsService.deleteTranslation(id, lang, spell);
   }
 }
