@@ -382,6 +382,110 @@
         ]
       }
     },
+    "/spells/{id}/translations/{lang}": {
+      "patch": {
+        "operationId": "SpellsController_updateTranslation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the spell",
+            "schema": {
+              "example": "507f1f77bcf86cd799439011",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lang",
+            "required": true,
+            "in": "path",
+            "description": "The ISO 2-letter code of the language to update",
+            "schema": {
+              "example": "en",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSpellTranslationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Translation updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/SpellContent"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or invalid language code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cannot modify components when multiple translations exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Spell or translation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Spell or translation has been deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update a specific translation of a spell",
+        "tags": [
+          "Spells"
+        ]
+      }
+    },
     "/monsters": {
       "get": {
         "operationId": "MonstersController_findAll",
@@ -820,12 +924,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T14:45:25.373Z"
+            "example": "2025-12-08T15:04:08.598Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T14:45:25.373Z"
+            "example": "2025-12-08T15:04:08.598Z"
           },
           "name": {
             "type": "string",
@@ -1146,6 +1250,75 @@
           "lang",
           "spellContent"
         ]
+      },
+      "UpdateSpellTranslationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Fireball",
+            "description": "The name of the spell"
+          },
+          "description": {
+            "type": "string",
+            "example": "A bright streak flashes from your pointing finger to a point you choose within range.",
+            "description": "The description of the spell"
+          },
+          "level": {
+            "type": "number",
+            "example": 3,
+            "description": "Spell level (0-9)",
+            "minimum": 0,
+            "maximum": 9
+          },
+          "school": {
+            "type": "string",
+            "example": "Evocation",
+            "description": "The school of magic"
+          },
+          "castingTime": {
+            "type": "string",
+            "example": "1 action",
+            "description": "The casting time of the spell"
+          },
+          "range": {
+            "type": "string",
+            "example": "150 feet",
+            "description": "The range of the spell"
+          },
+          "components": {
+            "example": [
+              "V",
+              "S",
+              "M"
+            ],
+            "description": "Spell components (V = Verbal, S = Somatic, M = Material)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "duration": {
+            "type": "string",
+            "example": "Instantaneous",
+            "description": "The duration of the spell"
+          },
+          "effectType": {
+            "type": "number",
+            "example": 1,
+            "description": "The effect type of the spell"
+          },
+          "damage": {
+            "type": "string",
+            "example": "8d6",
+            "description": "The damage of the spell"
+          },
+          "healing": {
+            "type": "string",
+            "example": "Heal 4d8 + spellcasting modifier",
+            "description": "The healing of the spell"
+          }
+        }
       },
       "Speed": {
         "type": "object",
@@ -1635,12 +1808,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T14:45:25.955Z"
+            "example": "2025-12-08T15:04:09.188Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T14:45:25.955Z"
+            "example": "2025-12-08T15:04:09.188Z"
           },
           "name": {
             "type": "string",
