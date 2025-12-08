@@ -782,6 +782,167 @@
           "Monsters"
         ]
       }
+    },
+    "/monsters/{id}/translations": {
+      "get": {
+        "operationId": "MonstersController_getTranslations",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the monster",
+            "schema": {
+              "example": "507f1f77bcf86cd799439011",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Translations list retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/MonsterTranslationSummaryDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error while fetching monster #ID: Id is not a valid mongoose id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Monster #ID not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Monster #ID has been deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get all available translations for a monster",
+        "tags": [
+          "Monsters"
+        ]
+      }
+    },
+    "/monsters/{id}/translations/{lang}": {
+      "get": {
+        "operationId": "MonstersController_getTranslation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the monster",
+            "schema": {
+              "example": "507f1f77bcf86cd799439011",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lang",
+            "required": true,
+            "in": "path",
+            "description": "ISO 2-letter language code (e.g., en, fr, es, de)",
+            "schema": {
+              "example": "fr",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Translation retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MonsterContent"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error while fetching monster #ID: Id is not a valid mongoose id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Monster or translation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Monster or translation has been deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a specific translation for a monster by language code",
+        "tags": [
+          "Monsters"
+        ]
+      }
     }
   },
   "info": {
@@ -820,12 +981,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T14:45:25.373Z"
+            "example": "2025-12-08T16:42:42.795Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T14:45:25.373Z"
+            "example": "2025-12-08T16:42:42.795Z"
           },
           "name": {
             "type": "string",
@@ -1635,12 +1796,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T14:45:25.955Z"
+            "example": "2025-12-08T16:42:43.367Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-11-18T14:45:25.955Z"
+            "example": "2025-12-08T16:42:43.367Z"
           },
           "name": {
             "type": "string",
@@ -1721,6 +1882,52 @@
           "languages",
           "translations",
           "deletedAt"
+        ]
+      },
+      "MonsterTranslationSummaryDto": {
+        "type": "object",
+        "properties": {
+          "lang": {
+            "type": "string",
+            "example": "en",
+            "description": "ISO 2-letter language code"
+          },
+          "srd": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether this is SRD content"
+          },
+          "name": {
+            "type": "string",
+            "example": "Goblin",
+            "description": "Monster name in this language"
+          },
+          "deletedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": null,
+            "description": "Deletion date if archived"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2025-12-08T16:42:43.435Z",
+            "description": "Creation date of this translation"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2025-12-08T16:42:43.435Z",
+            "description": "Last update date of this translation"
+          }
+        },
+        "required": [
+          "lang",
+          "srd",
+          "name",
+          "deletedAt",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "CreateSpeedDto": {

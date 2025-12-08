@@ -82,9 +82,7 @@ describe("Monsters Translations (e2e)", () => {
     });
 
     it("should return list of available translations", async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/monsters/${testMonsterId}/translations`)
-        .expect(200);
+      const response = await request(app.getHttpServer()).get(`/monsters/${testMonsterId}/translations`).expect(200);
 
       expect(response.body.data).toBeDefined();
       expect(Array.isArray(response.body.data)).toBe(true);
@@ -104,17 +102,13 @@ describe("Monsters Translations (e2e)", () => {
 
     it("should return 404 for non-existent monster", async () => {
       const fakeId = new Types.ObjectId();
-      const response = await request(app.getHttpServer())
-        .get(`/monsters/${fakeId}/translations`)
-        .expect(404);
+      const response = await request(app.getHttpServer()).get(`/monsters/${fakeId}/translations`).expect(404);
 
       expect(response.body).toHaveProperty("status", 404);
     });
 
     it("should return 400 for invalid monster ID", async () => {
-      await request(app.getHttpServer())
-        .get("/monsters/invalid-id/translations")
-        .expect(400);
+      await request(app.getHttpServer()).get("/monsters/invalid-id/translations").expect(400);
     });
 
     it("should return 410 for deleted monster", async () => {
@@ -125,9 +119,7 @@ describe("Monsters Translations (e2e)", () => {
       });
       const saved = await deletedMonster.save();
 
-      const response = await request(app.getHttpServer())
-        .get(`/monsters/${saved._id}/translations`)
-        .expect(410);
+      const response = await request(app.getHttpServer()).get(`/monsters/${saved._id}/translations`).expect(410);
 
       expect(response.body).toHaveProperty("status", 410);
 
@@ -138,9 +130,7 @@ describe("Monsters Translations (e2e)", () => {
 
   describe("GET /monsters/:id/translations/:lang", () => {
     it("should return specific translation", async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/monsters/${testMonsterId}/translations/fr`)
-        .expect(200);
+      const response = await request(app.getHttpServer()).get(`/monsters/${testMonsterId}/translations/fr`).expect(200);
 
       expect(response.body.data).toBeDefined();
       expect(response.body.data.name).toBe("Gobelin");
@@ -148,39 +138,29 @@ describe("Monsters Translations (e2e)", () => {
     });
 
     it("should return 404 for non-existent translation", async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/monsters/${testMonsterId}/translations/de`)
-        .expect(404);
+      const response = await request(app.getHttpServer()).get(`/monsters/${testMonsterId}/translations/de`).expect(404);
 
       expect(response.body).toHaveProperty("status", 404);
     });
 
     it("should return 404 for non-existent monster", async () => {
       const fakeId = new Types.ObjectId();
-      const response = await request(app.getHttpServer())
-        .get(`/monsters/${fakeId}/translations/en`)
-        .expect(404);
+      const response = await request(app.getHttpServer()).get(`/monsters/${fakeId}/translations/en`).expect(404);
 
       expect(response.body).toHaveProperty("status", 404);
     });
 
     it("should return 400 for invalid language code", async () => {
-      await request(app.getHttpServer())
-        .get(`/monsters/${testMonsterId}/translations/invalid`)
-        .expect(400);
+      await request(app.getHttpServer()).get(`/monsters/${testMonsterId}/translations/invalid`).expect(400);
     });
 
     it("should return 400 for uppercase language code", async () => {
-      await request(app.getHttpServer())
-        .get(`/monsters/${testMonsterId}/translations/FR`)
-        .expect(400);
+      await request(app.getHttpServer()).get(`/monsters/${testMonsterId}/translations/FR`).expect(400);
     });
 
     it("should return 410 for deleted translation", async () => {
       // es translation is marked as deleted
-      const response = await request(app.getHttpServer())
-        .get(`/monsters/${testMonsterId}/translations/es`)
-        .expect(410);
+      const response = await request(app.getHttpServer()).get(`/monsters/${testMonsterId}/translations/es`).expect(410);
 
       expect(response.body).toHaveProperty("status", 410);
     });
@@ -193,9 +173,7 @@ describe("Monsters Translations (e2e)", () => {
       });
       const saved = await deletedMonster.save();
 
-      const response = await request(app.getHttpServer())
-        .get(`/monsters/${saved._id}/translations/en`)
-        .expect(410);
+      const response = await request(app.getHttpServer()).get(`/monsters/${saved._id}/translations/en`).expect(410);
 
       expect(response.body).toHaveProperty("status", 410);
 
