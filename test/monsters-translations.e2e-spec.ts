@@ -82,7 +82,7 @@ describe("Monsters Translations - GET (e2e)", () => {
     });
 
     it("should return list of available translations", async () => {
-      const response = await request(app.getHttpServer()).get(\`/monsters/\${testMonsterId}/translations\`).expect(200);
+      const response = await request(app.getHttpServer()).get(`/monsters/${testMonsterId}/translations`).expect(200);
 
       expect(response.body.data).toBeDefined();
       expect(Array.isArray(response.body.data)).toBe(true);
@@ -102,7 +102,7 @@ describe("Monsters Translations - GET (e2e)", () => {
 
     it("should return 404 for non-existent monster", async () => {
       const fakeId = new Types.ObjectId();
-      const response = await request(app.getHttpServer()).get(\`/monsters/\${fakeId}/translations\`).expect(404);
+      const response = await request(app.getHttpServer()).get(`/monsters/${fakeId}/translations`).expect(404);
 
       expect(response.body).toHaveProperty("status", 404);
     });
@@ -119,7 +119,7 @@ describe("Monsters Translations - GET (e2e)", () => {
       });
       const saved = await deletedMonster.save();
 
-      const response = await request(app.getHttpServer()).get(\`/monsters/\${saved._id}/translations\`).expect(410);
+      const response = await request(app.getHttpServer()).get(`/monsters/${saved._id}/translations`).expect(410);
 
       expect(response.body).toHaveProperty("status", 410);
 
@@ -130,7 +130,7 @@ describe("Monsters Translations - GET (e2e)", () => {
 
   describe("GET /monsters/:id/translations/:lang", () => {
     it("should return specific translation", async () => {
-      const response = await request(app.getHttpServer()).get(\`/monsters/\${testMonsterId}/translations/fr\`).expect(200);
+      const response = await request(app.getHttpServer()).get(`/monsters/${testMonsterId}/translations/fr`).expect(200);
 
       expect(response.body.data).toBeDefined();
       expect(response.body.data.name).toBe("Gobelin");
@@ -138,29 +138,29 @@ describe("Monsters Translations - GET (e2e)", () => {
     });
 
     it("should return 404 for non-existent translation", async () => {
-      const response = await request(app.getHttpServer()).get(\`/monsters/\${testMonsterId}/translations/de\`).expect(404);
+      const response = await request(app.getHttpServer()).get(`/monsters/${testMonsterId}/translations/de`).expect(404);
 
       expect(response.body).toHaveProperty("status", 404);
     });
 
     it("should return 404 for non-existent monster", async () => {
       const fakeId = new Types.ObjectId();
-      const response = await request(app.getHttpServer()).get(\`/monsters/\${fakeId}/translations/en\`).expect(404);
+      const response = await request(app.getHttpServer()).get(`/monsters/${fakeId}/translations/en`).expect(404);
 
       expect(response.body).toHaveProperty("status", 404);
     });
 
     it("should return 400 for invalid language code", async () => {
-      await request(app.getHttpServer()).get(\`/monsters/\${testMonsterId}/translations/invalid\`).expect(400);
+      await request(app.getHttpServer()).get(`/monsters/${testMonsterId}/translations/invalid`).expect(400);
     });
 
     it("should return 400 for uppercase language code", async () => {
-      await request(app.getHttpServer()).get(\`/monsters/\${testMonsterId}/translations/FR\`).expect(400);
+      await request(app.getHttpServer()).get(`/monsters/${testMonsterId}/translations/FR`).expect(400);
     });
 
     it("should return 410 for deleted translation", async () => {
       // es translation is marked as deleted
-      const response = await request(app.getHttpServer()).get(\`/monsters/\${testMonsterId}/translations/es\`).expect(410);
+      const response = await request(app.getHttpServer()).get(`/monsters/${testMonsterId}/translations/es`).expect(410);
 
       expect(response.body).toHaveProperty("status", 410);
     });
@@ -173,7 +173,7 @@ describe("Monsters Translations - GET (e2e)", () => {
       });
       const saved = await deletedMonster.save();
 
-      const response = await request(app.getHttpServer()).get(\`/monsters/\${saved._id}/translations/en\`).expect(410);
+      const response = await request(app.getHttpServer()).get(`/monsters/${saved._id}/translations/en`).expect(410);
 
       expect(response.body).toHaveProperty("status", 410);
 
@@ -216,38 +216,38 @@ describe("MonstersController - deleteTranslation (e2e)", () => {
   afterAll(async () => {
     // Clean up: delete the test monster
     if (createdMonsterId) {
-      await request(app.getHttpServer()).delete(\`/monsters/\${createdMonsterId}\`);
+      await request(app.getHttpServer()).delete(`/monsters/${createdMonsterId}`);
     }
     await app.close();
   });
 
   describe("DELETE /monsters/:id/translations/:lang", () => {
     it("should return 400 for invalid MongoDB ID", async () => {
-      await request(app.getHttpServer()).delete(\`/monsters/invalid-id/translations/fr\`).expect(400);
+      await request(app.getHttpServer()).delete(`/monsters/invalid-id/translations/fr`).expect(400);
     });
 
     it("should return 400 for invalid language code (3 letters)", async () => {
-      await request(app.getHttpServer()).delete(\`/monsters/\${createdMonsterId}/translations/FRA\`).expect(400);
+      await request(app.getHttpServer()).delete(`/monsters/${createdMonsterId}/translations/FRA`).expect(400);
     });
 
     it("should return 400 for invalid language code (uppercase)", async () => {
-      await request(app.getHttpServer()).delete(\`/monsters/\${createdMonsterId}/translations/FR\`).expect(400);
+      await request(app.getHttpServer()).delete(`/monsters/${createdMonsterId}/translations/FR`).expect(400);
     });
 
     it("should return 404 for non-existent monster", async () => {
       const fakeId = new Types.ObjectId().toString();
-      await request(app.getHttpServer()).delete(\`/monsters/\${fakeId}/translations/fr\`).expect(404);
+      await request(app.getHttpServer()).delete(`/monsters/${fakeId}/translations/fr`).expect(404);
     });
 
     it("should return 404 for non-existent translation", async () => {
       // Assuming the monster only has 'en' translation initially
-      await request(app.getHttpServer()).delete(\`/monsters/\${createdMonsterId}/translations/jp\`).expect(404);
+      await request(app.getHttpServer()).delete(`/monsters/${createdMonsterId}/translations/jp`).expect(404);
     });
 
     it("should return 403 when trying to delete the last active translation", async () => {
       // If the monster only has one translation (en), trying to delete it should fail
       const response = await request(app.getHttpServer())
-        .delete(\`/monsters/\${createdMonsterId}/translations/en\`)
+        .delete(`/monsters/${createdMonsterId}/translations/en`)
         .expect(403);
 
       expect(response.body.message).toContain("last active translation");
@@ -302,14 +302,14 @@ describe("MonstersController - deleteTranslation SRD protection (e2e)", () => {
 
       // Attempt to delete the SRD translation - this MUST fail with 403
       const deleteResponse = await request(app.getHttpServer())
-        .delete(\`/monsters/\${srdMonsterId}/translations/en\`)
+        .delete(`/monsters/${srdMonsterId}/translations/en`)
         .expect(403);
 
       expect(deleteResponse.body.message).toContain("SRD");
       expect(deleteResponse.body.message).toContain("protected");
 
       // Clean up - use regular delete which should also fail due to SRD
-      await request(app.getHttpServer()).delete(\`/monsters/\${srdMonsterId}\`);
+      await request(app.getHttpServer()).delete(`/monsters/${srdMonsterId}`);
     });
   });
 });
@@ -330,7 +330,7 @@ describe("MonstersController - deleteTranslation with multiple translations (e2e
 
   afterAll(async () => {
     if (testMonsterId) {
-      await request(app.getHttpServer()).delete(\`/monsters/\${testMonsterId}\`);
+      await request(app.getHttpServer()).delete(`/monsters/${testMonsterId}`);
     }
     await app.close();
   });
@@ -362,7 +362,7 @@ describe("MonstersController - deleteTranslation with multiple translations (e2e
 
     // Trying to delete the only translation should fail
     const response = await request(app.getHttpServer())
-      .delete(\`/monsters/\${testMonsterId}/translations/en\`)
+      .delete(`/monsters/${testMonsterId}/translations/en`)
       .expect(403);
 
     expect(response.body.message).toContain("last active translation");
