@@ -28,8 +28,10 @@ import { langParam } from "@/resources/monsters/dtos/find-one.dto";
 import { ProblemDetailsDto } from "@/common/dtos/errors.dto";
 import { UpdateMonsterDto } from "@/resources/monsters/dtos/update-monster.dto";
 import { UpdateMonsterTranslationDto } from "@/resources/monsters/dtos/update-monster-translation.dto";
+import { DeleteTranslationResponseDto } from "@/resources/monsters/dtos/delete-translation.dto";
+import { MonsterTranslationSummaryDto, LangParamDto } from "@/resources/monsters/dtos/monster-translation.dto";
 
-@ApiExtraModels(Monster, MonsterContent, IResponse, IPaginatedResponse, UpdateMonsterTranslationDto)
+@ApiExtraModels(Monster, MonsterContent, IResponse, IPaginatedResponse, UpdateMonsterTranslationDto, DeleteTranslationResponseDto, MonsterTranslationSummaryDto)
 @Controller("monsters")
 export class MonstersController {
   constructor(private readonly monstersService: MonstersService) {}
@@ -113,6 +115,95 @@ export class MonstersController {
   ): Promise<IResponse<Monster>> {
     const { lang = "en" } = query;
     return this.validateResource(id, lang);
+  }
+
+  @Get(":id/translations")
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the monster",
+    example: "507f1f77bcf86cd799439011",
+  })
+  @ApiOperation({ summary: "Get all available translations for a monster" })
+  @ApiOkResponse({
+    description: "Translations list retrieved successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(IResponse) },
+        {
+          properties: {
+            data: {
+              type: "array",
+              items: { $ref: getSchemaPath(MonsterTranslationSummaryDto) },
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({ status: 404, description: "Monster #ID not found", type: ProblemDetailsDto })
+  @ApiResponse({
+    status: 400,
+    description: "Error while fetching monster #ID: Id is not a valid mongoose id",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({ status: 410, description: "Monster #ID has been deleted", type: ProblemDetailsDto })
+  async getTranslations(
+    @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
+  ): Promise<IResponse<MonsterTranslationSummaryDto[]>> {
+    this.logger.log(`Getting translations list for monster #${id}`);
+    return this.monstersService.getTranslations(id);
+  }
+
+  @Get(":id/translations/:lang")
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the monster",
+    example: "507f1f77bcf86cd799439011",
+  })
+  @ApiParam({
+    name: "lang",
+    type: String,
+    required: true,
+    description: "ISO 2-letter language code (e.g., en, fr, es, de)",
+    example: "fr",
+  })
+  @ApiOperation({ summary: "Get a specific translation for a monster by language code" })
+  @ApiOkResponse({
+    description: "Translation retrieved successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(IResponse) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(MonsterContent) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({ status: 404, description: "Monster or translation not found", type: ProblemDetailsDto })
+  @ApiResponse({
+    status: 400,
+    description: "Error while fetching monster #ID: Id is not a valid mongoose id",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({ status: 410, description: "Monster or translation has been deleted", type: ProblemDetailsDto })
+  async getTranslation(
+    @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
+    @Param("lang") lang: string,
+  ): Promise<IResponse<MonsterContent>> {
+    // Validate language format
+    if (!/^[a-z]{2}$/.test(lang)) {
+      const message = `Invalid language code '${lang}': must be a 2-letter ISO code in lowercase`;
+      this.logger.error(message);
+      throw new BadRequestException(message);
+    }
+    this.logger.log(`Getting translation '${lang}' for monster #${id}`);
+    return this.monstersService.getTranslation(id, lang);
   }
 
   @Post()
@@ -377,5 +468,68 @@ export class MonstersController {
     const isAdmin = false; // This should come from auth guard/decorator
 
     return this.monstersService.updateTranslation(id, lang, updateData, isAdmin);
+  }
+
+  @Delete(":id/translations/:lang")
+  @ApiOperation({ summary: "Delete a specific translation of a monster" })
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the monster",
+    example: "507f1f77bcf86cd799439011",
+  })
+  @ApiParam({
+    name: "lang",
+    type: String,
+    required: true,
+    description: "The ISO 2 letter code of the language to delete",
+    example: "fr",
+  })
+  @ApiOkResponse({
+    description: "Translation deleted successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(IResponse) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(DeleteTranslationResponseDto) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Invalid monster ID or language code",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Cannot delete SRD translation or last active translation",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Monster or translation not found",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 410,
+    description: "Monster or translation has been deleted",
+    type: ProblemDetailsDto,
+  })
+  async deleteTranslation(
+    @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
+    @Param("lang") lang: string,
+  ): Promise<IResponse<DeleteTranslationResponseDto>> {
+    // Validate language format
+    if (!/^[a-z]{2}$/.test(lang)) {
+      const message = `Invalid language code '${lang}': must be a 2-letter ISO code in lowercase (e.g., fr, en, es)`;
+      this.logger.error(message);
+      throw new BadRequestException(message);
+    }
+
+    return this.monstersService.deleteTranslation(id, lang);
   }
 }

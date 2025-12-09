@@ -23,6 +23,8 @@ import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 import { UpdateMonsterDto } from "@/resources/monsters/dtos/update-monster.dto";
 import { UpdateMonsterTranslationDto } from "@/resources/monsters/dtos/update-monster-translation.dto";
 import { CreateMonsterTranslationDto } from "@/resources/monsters/dtos/create-monster-translation.dto";
+import { DeleteTranslationResponseDto } from "@/resources/monsters/dtos/delete-translation.dto";
+import { MonsterTranslationSummaryDto } from "@/resources/monsters/dtos/monster-translation.dto";
 
 @Injectable()
 export class MonstersService {
@@ -338,7 +340,7 @@ export class MonstersService {
 
       return {
         message: `Monsters found in ${end - start}ms`,
-        data: this.mapper.calculAvailablesLanguagesList(monsters),
+        data: monsters,
         pagination: {
           page,
           offset,
@@ -402,6 +404,137 @@ export class MonstersService {
     } catch (error) {
       if (error instanceof HttpException) throw error;
       const message: string = `Error while fetching monster #${id}: ${error.message}`;
+      this.logger.error(message);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  /**
+   * Get all available translations for a monster
+   * @param id Monster ID
+   * @returns List of translation summaries with basic metadata
+   */
+  async getTranslations(id: Types.ObjectId): Promise<IResponse<MonsterTranslationSummaryDto[]>> {
+    try {
+      const start: number = Date.now();
+      const monster: Monster = await this.monsterModel
+        .findById(id)
+        .select({
+          translations: 1,
+          languages: 1,
+          deletedAt: 1,
+        })
+        .exec();
+      const end: number = Date.now();
+
+      if (!monster) {
+        const message = `Monster #${id} not found`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      if (monster.deletedAt) {
+        const message = `Monster #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      // Build translation summaries
+      const translationSummaries: MonsterTranslationSummaryDto[] = [];
+
+      for (const lang of monster.languages) {
+        const translation: MonsterContent = monster.translations.get(lang);
+        if (translation && !translation.deletedAt) {
+          translationSummaries.push({
+            lang,
+            srd: translation.srd,
+            name: translation.name,
+            deletedAt: translation.deletedAt,
+            createdAt: translation.createdAt,
+            updatedAt: translation.updatedAt,
+          });
+        }
+      }
+
+      const message: string = `Found ${translationSummaries.length} translation(s) for monster #${id} in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: translationSummaries,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while fetching translations for monster #${id}: ${error.message}`;
+      this.logger.error(message);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  /**
+   * Get a specific translation for a monster by language code
+   * @param id Monster ID
+   * @param lang ISO 2-letter language code
+   * @returns The translation content with populated spells
+   */
+  async getTranslation(id: Types.ObjectId, lang: string): Promise<IResponse<MonsterContent>> {
+    try {
+      const start: number = Date.now();
+      const monster: Monster = await this.monsterModel
+        .findById(id)
+        .select({
+          translations: 1,
+          languages: 1,
+          deletedAt: 1,
+        })
+        .exec();
+      const end: number = Date.now();
+
+      if (!monster) {
+        const message = `Monster #${id} not found`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      if (monster.deletedAt) {
+        const message = `Monster #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      // Check if translation exists for the requested language
+      if (!monster.languages.includes(lang) || !monster.translations.has(lang)) {
+        const message = `Translation '${lang}' not found for monster #${id}`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      const translation: MonsterContent = monster.translations.get(lang);
+
+      // Check if translation has been deleted
+      if (translation.deletedAt) {
+        const message = `Translation '${lang}' for monster #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      // Populate spells if spellcasting exists
+      const monsterForPopulate: any = {
+        translations: new Map([[lang, translation]]),
+      };
+      const populatedMonster = await this.populateSpells(monsterForPopulate, lang);
+      const populatedTranslation: MonsterContent = populatedMonster.translations.get(lang);
+
+      const message: string = `Translation '${lang}' for monster #${id} found in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: populatedTranslation,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while fetching translation '${lang}' for monster #${id}: ${error.message}`;
       this.logger.error(message);
       throw new InternalServerErrorException(message);
     }
@@ -781,6 +914,104 @@ export class MonstersService {
     } catch (error) {
       if (error instanceof HttpException) throw error;
       const message: string = `Error while updating translation '${lang}' for monster #${id}`;
+      this.logger.error(`${message}: ${error}`);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  /**
+   * Delete a specific translation of a monster (soft delete)
+   * @param id Monster ID
+   * @param lang Language code to delete
+   * @returns DeleteTranslationResponseDto
+   */
+  async deleteTranslation(id: Types.ObjectId, lang: string): Promise<IResponse<DeleteTranslationResponseDto>> {
+    try {
+      const start: number = Date.now();
+
+      // Fetch the monster
+      const monster: Monster = await this.monsterModel.findById(id).exec();
+
+      // Check if monster exists
+      if (!monster) {
+        const message = `Monster #${id} not found`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      // Check if monster is already deleted
+      if (monster.deletedAt) {
+        const message = `Monster #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      // Check if the translation exists
+      const translation = monster.translations.get(lang);
+      if (!translation) {
+        const message = `Translation '${lang}' not found for monster #${id}`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      // Check if translation is already deleted
+      if (translation.deletedAt) {
+        const message = `Translation '${lang}' for monster #${id} has already been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      // CRITICAL: Check if translation is SRD - never allow deletion of SRD translations
+      if (translation.srd === true) {
+        const message = `Cannot delete SRD translation '${lang}' for monster #${id}: SRD translations are protected and cannot be deleted`;
+        this.logger.error(message);
+        throw new ForbiddenException(message);
+      }
+
+      // Check if this is the last active translation
+      const activeTranslations = Array.from(monster.translations.entries()).filter(([, content]) => !content.deletedAt);
+      if (activeTranslations.length <= 1) {
+        const message = `Cannot delete translation '${lang}' for monster #${id}: it is the last active translation`;
+        this.logger.error(message);
+        throw new ForbiddenException(message);
+      }
+
+      // Perform soft delete: set deletedAt on the translation
+      const deleteDate: Date = new Date();
+      translation.deletedAt = deleteDate;
+
+      // Remove language from the languages array
+      const updatedLanguages = monster.languages.filter((l) => l !== lang);
+
+      // Update the monster in database
+      await this.monsterModel
+        .updateOne(
+          { _id: id },
+          {
+            $set: {
+              [`translations.${lang}.deletedAt`]: deleteDate,
+              languages: updatedLanguages,
+            },
+          },
+        )
+        .exec();
+
+      const end: number = Date.now();
+
+      const message: string = `Translation '${lang}' for monster #${id} deleted in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: {
+          monsterId: id.toString(),
+          deletedLang: lang,
+          remainingLanguages: updatedLanguages,
+        },
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while deleting translation '${lang}' for monster #${id}`;
       this.logger.error(`${message}: ${error}`);
       throw new InternalServerErrorException(message);
     }
