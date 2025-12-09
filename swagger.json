@@ -1507,6 +1507,98 @@
         "tags": [
           "Monsters"
         ]
+      },
+      "delete": {
+        "operationId": "MonstersController_deleteTranslation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the monster",
+            "schema": {
+              "example": "507f1f77bcf86cd799439011",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lang",
+            "required": true,
+            "in": "path",
+            "description": "The ISO 2 letter code of the language to delete",
+            "schema": {
+              "example": "fr",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Translation deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/DeleteTranslationResponseDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid monster ID or language code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cannot delete SRD translation or last active translation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Monster or translation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Monster or translation has been deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Delete a specific translation of a monster",
+        "tags": [
+          "Monsters"
+        ]
       }
     }
   },
@@ -1546,12 +1638,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T07:09:28.429Z"
+            "example": "2025-12-09T07:39:17.791Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T07:09:28.429Z"
+            "example": "2025-12-09T07:39:17.791Z"
           },
           "name": {
             "type": "string",
@@ -1719,22 +1811,22 @@
       "DeleteTranslationResponseDto": {
         "type": "object",
         "properties": {
-          "message": {
+          "monsterId": {
             "type": "string",
-            "example": "Translation 'fr' for spell #507f1f77bcf86cd799439011 deleted in 15ms",
-            "description": "Success message"
+            "description": "The ID of the monster",
+            "example": "507f1f77bcf86cd799439011"
           },
-          "deletedLanguage": {
+          "deletedLang": {
             "type": "string",
-            "example": "fr",
-            "description": "The language code of the deleted translation"
+            "description": "The language code that was deleted",
+            "example": "fr"
           },
           "remainingLanguages": {
+            "description": "Remaining languages after deletion",
             "example": [
               "en",
               "es"
             ],
-            "description": "Remaining active languages after deletion",
             "type": "array",
             "items": {
               "type": "string"
@@ -1742,8 +1834,8 @@
           }
         },
         "required": [
-          "message",
-          "deletedLanguage",
+          "monsterId",
+          "deletedLang",
           "remainingLanguages"
         ]
       },
@@ -1768,13 +1860,13 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T07:09:28.653Z",
+            "example": "2025-12-09T07:39:17.907Z",
             "description": "Creation date of this translation"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T07:09:28.653Z",
+            "example": "2025-12-09T07:39:17.907Z",
             "description": "Last update date of this translation"
           }
         },
@@ -2604,12 +2696,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T07:09:29.257Z"
+            "example": "2025-12-09T07:39:18.392Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T07:09:29.257Z"
+            "example": "2025-12-09T07:39:18.392Z"
           },
           "name": {
             "type": "string",
@@ -2719,13 +2811,13 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T07:09:29.370Z",
+            "example": "2025-12-09T07:39:18.469Z",
             "description": "Creation date of this translation"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T07:09:29.370Z",
+            "example": "2025-12-09T07:39:18.469Z",
             "description": "Last update date of this translation"
           }
         },

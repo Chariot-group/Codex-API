@@ -22,6 +22,7 @@ import { IResponse } from "@/common/dtos/reponse.dto";
 import { SpellFormattedDto } from "@/common/dtos/spell-formatted.dto";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 import { UpdateMonsterDto } from "@/resources/monsters/dtos/update-monster.dto";
+import { DeleteTranslationResponseDto } from "@/resources/monsters/dtos/delete-translation.dto";
 import { MonsterTranslationSummaryDto } from "@/resources/monsters/dtos/monster-translation.dto";
 
 @Injectable()
@@ -690,6 +691,104 @@ export class MonstersService {
     } catch (error) {
       if (error instanceof HttpException) throw error;
       const message: string = `Error while adding translation to monster #${id}`;
+      this.logger.error(`${message}: ${error}`);
+      throw new InternalServerErrorException(message);
+    }
+  }
+
+  /**
+   * Delete a specific translation of a monster (soft delete)
+   * @param id Monster ID
+   * @param lang Language code to delete
+   * @returns DeleteTranslationResponseDto
+   */
+  async deleteTranslation(id: Types.ObjectId, lang: string): Promise<IResponse<DeleteTranslationResponseDto>> {
+    try {
+      const start: number = Date.now();
+
+      // Fetch the monster
+      const monster: Monster = await this.monsterModel.findById(id).exec();
+
+      // Check if monster exists
+      if (!monster) {
+        const message = `Monster #${id} not found`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      // Check if monster is already deleted
+      if (monster.deletedAt) {
+        const message = `Monster #${id} has been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      // Check if the translation exists
+      const translation = monster.translations.get(lang);
+      if (!translation) {
+        const message = `Translation '${lang}' not found for monster #${id}`;
+        this.logger.error(message);
+        throw new NotFoundException(message);
+      }
+
+      // Check if translation is already deleted
+      if (translation.deletedAt) {
+        const message = `Translation '${lang}' for monster #${id} has already been deleted`;
+        this.logger.error(message);
+        throw new GoneException(message);
+      }
+
+      // CRITICAL: Check if translation is SRD - never allow deletion of SRD translations
+      if (translation.srd === true) {
+        const message = `Cannot delete SRD translation '${lang}' for monster #${id}: SRD translations are protected and cannot be deleted`;
+        this.logger.error(message);
+        throw new ForbiddenException(message);
+      }
+
+      // Check if this is the last active translation
+      const activeTranslations = Array.from(monster.translations.entries()).filter(([, content]) => !content.deletedAt);
+      if (activeTranslations.length <= 1) {
+        const message = `Cannot delete translation '${lang}' for monster #${id}: it is the last active translation`;
+        this.logger.error(message);
+        throw new ForbiddenException(message);
+      }
+
+      // Perform soft delete: set deletedAt on the translation
+      const deleteDate: Date = new Date();
+      translation.deletedAt = deleteDate;
+
+      // Remove language from the languages array
+      const updatedLanguages = monster.languages.filter((l) => l !== lang);
+
+      // Update the monster in database
+      await this.monsterModel
+        .updateOne(
+          { _id: id },
+          {
+            $set: {
+              [`translations.${lang}.deletedAt`]: deleteDate,
+              languages: updatedLanguages,
+            },
+          },
+        )
+        .exec();
+
+      const end: number = Date.now();
+
+      const message: string = `Translation '${lang}' for monster #${id} deleted in ${end - start}ms`;
+      this.logger.log(message);
+
+      return {
+        message,
+        data: {
+          monsterId: id.toString(),
+          deletedLang: lang,
+          remainingLanguages: updatedLanguages,
+        },
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      const message: string = `Error while deleting translation '${lang}' for monster #${id}`;
       this.logger.error(`${message}: ${error}`);
       throw new InternalServerErrorException(message);
     }

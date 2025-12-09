@@ -1478,3 +1478,244 @@ describe("MonstersService - addTranslation", () => {
     errSpy.mockRestore();
   });
 });
+
+describe("MonstersService - deleteTranslation", () => {
+  let service: MonstersService;
+  let monsterModel: any;
+  let spellModel: any;
+
+  const id = new Types.ObjectId();
+
+  beforeEach(async () => {
+    monsterModel = {
+      findById: jest.fn().mockReturnThis(),
+      updateOne: jest.fn().mockReturnThis(),
+      exec: jest.fn(),
+    };
+
+    spellModel = {};
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        MonstersService,
+        { provide: getModelToken(Monster.name), useValue: monsterModel },
+        { provide: getModelToken(Spell.name), useValue: spellModel },
+      ],
+    }).compile();
+
+    service = module.get<MonstersService>(MonstersService);
+  });
+
+  it("should delete a non-SRD translation successfully", async () => {
+    const mockMonster = {
+      _id: id,
+      tag: 0,
+      languages: ["en", "fr"],
+      translations: new Map([
+        ["en", { name: "Goblin", srd: false, deletedAt: null }],
+        ["fr", { name: "Gobelin", srd: false, deletedAt: null }],
+      ]),
+      deletedAt: null,
+    };
+
+    monsterModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(mockMonster),
+    });
+    monsterModel.updateOne.mockReturnValue({
+      exec: jest.fn().mockResolvedValue({}),
+    });
+
+    const logSpy = jest.spyOn(service["logger"], "log").mockImplementation(() => {});
+
+    const result = await service.deleteTranslation(id, "fr");
+
+    expect(result.data.deletedLang).toBe("fr");
+    expect(result.data.remainingLanguages).toEqual(["en"]);
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/deleted in \d+ms/));
+
+    logSpy.mockRestore();
+  });
+
+  it("should throw NotFoundException if monster not found", async () => {
+    monsterModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(null),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.deleteTranslation(id, "fr")).rejects.toThrow(NotFoundException);
+
+    errSpy.mockRestore();
+  });
+
+  it("should throw GoneException if monster is deleted", async () => {
+    const mockMonster = {
+      _id: id,
+      tag: 0,
+      languages: ["en", "fr"],
+      translations: new Map([
+        ["en", { name: "Goblin", srd: false }],
+        ["fr", { name: "Gobelin", srd: false }],
+      ]),
+      deletedAt: new Date(),
+    };
+
+    monsterModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(mockMonster),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.deleteTranslation(id, "fr")).rejects.toThrow(GoneException);
+
+    errSpy.mockRestore();
+  });
+
+  it("should throw NotFoundException if translation not found", async () => {
+    const mockMonster = {
+      _id: id,
+      tag: 0,
+      languages: ["en"],
+      translations: new Map([["en", { name: "Goblin", srd: false }]]),
+      deletedAt: null,
+    };
+
+    monsterModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(mockMonster),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.deleteTranslation(id, "fr")).rejects.toThrow(NotFoundException);
+
+    errSpy.mockRestore();
+  });
+
+  it("should throw GoneException if translation already deleted", async () => {
+    const mockMonster = {
+      _id: id,
+      tag: 0,
+      languages: ["en"],
+      translations: new Map([
+        ["en", { name: "Goblin", srd: false, deletedAt: null }],
+        ["fr", { name: "Gobelin", srd: false, deletedAt: new Date() }],
+      ]),
+      deletedAt: null,
+    };
+
+    monsterModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(mockMonster),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.deleteTranslation(id, "fr")).rejects.toThrow(GoneException);
+
+    errSpy.mockRestore();
+  });
+
+  it("should throw ForbiddenException when trying to delete SRD translation", async () => {
+    const mockMonster = {
+      _id: id,
+      tag: 1,
+      languages: ["en", "fr"],
+      translations: new Map([
+        ["en", { name: "Goblin", srd: true, deletedAt: null }],
+        ["fr", { name: "Gobelin", srd: false, deletedAt: null }],
+      ]),
+      deletedAt: null,
+    };
+
+    monsterModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(mockMonster),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.deleteTranslation(id, "en")).rejects.toThrow(ForbiddenException);
+    await expect(service.deleteTranslation(id, "en")).rejects.toThrow(/SRD translations are protected/);
+
+    errSpy.mockRestore();
+  });
+
+  it("should throw ForbiddenException when trying to delete the last active translation", async () => {
+    const mockMonster = {
+      _id: id,
+      tag: 0,
+      languages: ["en"],
+      translations: new Map([["en", { name: "Goblin", srd: false, deletedAt: null }]]),
+      deletedAt: null,
+    };
+
+    monsterModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(mockMonster),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.deleteTranslation(id, "en")).rejects.toThrow(ForbiddenException);
+    await expect(service.deleteTranslation(id, "en")).rejects.toThrow(/last active translation/);
+
+    errSpy.mockRestore();
+  });
+
+  it("should throw InternalServerErrorException on DB error", async () => {
+    monsterModel.findById.mockReturnValue({
+      exec: jest.fn().mockRejectedValue(new Error("DB fail")),
+    });
+
+    const errSpy = jest.spyOn(service["logger"], "error").mockImplementation(() => {});
+
+    await expect(service.deleteTranslation(id, "fr")).rejects.toThrow(InternalServerErrorException);
+
+    errSpy.mockRestore();
+  });
+
+  it("should rethrow HttpException errors", async () => {
+    const httpError = new NotFoundException("Custom not found");
+    monsterModel.findById.mockReturnValue({
+      exec: jest.fn().mockRejectedValue(httpError),
+    });
+
+    await expect(service.deleteTranslation(id, "fr")).rejects.toThrow(NotFoundException);
+  });
+
+  it("should correctly update the database with soft delete", async () => {
+    const mockMonster = {
+      _id: id,
+      tag: 0,
+      languages: ["en", "fr", "es"],
+      translations: new Map([
+        ["en", { name: "Goblin", srd: false, deletedAt: null }],
+        ["fr", { name: "Gobelin", srd: false, deletedAt: null }],
+        ["es", { name: "Goblin", srd: false, deletedAt: null }],
+      ]),
+      deletedAt: null,
+    };
+
+    const updateOneMock = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({}),
+    });
+
+    monsterModel.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(mockMonster),
+    });
+    monsterModel.updateOne = updateOneMock;
+
+    const logSpy = jest.spyOn(service["logger"], "log").mockImplementation(() => {});
+
+    await service.deleteTranslation(id, "fr");
+
+    expect(updateOneMock).toHaveBeenCalledWith(
+      { _id: id },
+      {
+        $set: {
+          [`translations.fr.deletedAt`]: expect.any(Date),
+          languages: ["en", "es"],
+        },
+      },
+    );
+
+    logSpy.mockRestore();
+  });
+});

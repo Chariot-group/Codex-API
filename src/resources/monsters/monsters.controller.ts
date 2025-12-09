@@ -26,9 +26,10 @@ import { Types } from "mongoose";
 import { langParam } from "@/resources/monsters/dtos/find-one.dto";
 import { ProblemDetailsDto } from "@/common/dtos/errors.dto";
 import { UpdateMonsterDto } from "@/resources/monsters/dtos/update-monster.dto";
+import { DeleteTranslationResponseDto } from "@/resources/monsters/dtos/delete-translation.dto";
 import { MonsterTranslationSummaryDto, LangParamDto } from "@/resources/monsters/dtos/monster-translation.dto";
 
-@ApiExtraModels(Monster, MonsterContent, IResponse, IPaginatedResponse, MonsterTranslationSummaryDto)
+@ApiExtraModels(Monster, MonsterContent, IResponse, IPaginatedResponse, DeleteTranslationResponseDto, MonsterTranslationSummaryDto)
 @Controller("monsters")
 export class MonstersController {
   constructor(private readonly monstersService: MonstersService) {}
@@ -397,5 +398,68 @@ export class MonstersController {
     const isAdmin = false; // Placeholder - should be extracted from request context
 
     return this.monstersService.addTranslation(id, lang.toLowerCase(), translationDto, isAdmin);
+  }
+
+  @Delete(":id/translations/:lang")
+  @ApiOperation({ summary: "Delete a specific translation of a monster" })
+  @ApiParam({
+    name: "id",
+    type: String,
+    required: true,
+    description: "The ID of the monster",
+    example: "507f1f77bcf86cd799439011",
+  })
+  @ApiParam({
+    name: "lang",
+    type: String,
+    required: true,
+    description: "The ISO 2 letter code of the language to delete",
+    example: "fr",
+  })
+  @ApiOkResponse({
+    description: "Translation deleted successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(IResponse) },
+        {
+          properties: {
+            data: { $ref: getSchemaPath(DeleteTranslationResponseDto) },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Invalid monster ID or language code",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Cannot delete SRD translation or last active translation",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Monster or translation not found",
+    type: ProblemDetailsDto,
+  })
+  @ApiResponse({
+    status: 410,
+    description: "Monster or translation has been deleted",
+    type: ProblemDetailsDto,
+  })
+  async deleteTranslation(
+    @Param("id", ParseMongoIdPipe) id: Types.ObjectId,
+    @Param("lang") lang: string,
+  ): Promise<IResponse<DeleteTranslationResponseDto>> {
+    // Validate language format
+    if (!/^[a-z]{2}$/.test(lang)) {
+      const message = `Invalid language code '${lang}': must be a 2-letter ISO code in lowercase (e.g., fr, en, es)`;
+      this.logger.error(message);
+      throw new BadRequestException(message);
+    }
+
+    return this.monstersService.deleteTranslation(id, lang);
   }
 }
