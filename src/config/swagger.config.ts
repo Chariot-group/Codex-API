@@ -7,7 +7,18 @@ export const swaggerConfig = new DocumentBuilder()
   .setDescription("Codex API Documentation")
   .setVersion(process.env.API_VERSION || "unknown")
   .addServer(`${process.env.API_URL_SWAGGER || "unknown"}`)
-  .addBearerAuth()
+  .addOAuth2({
+    type: "oauth2",
+    flows: {
+      authorizationCode: {
+        authorizationUrl: `${process.env.SSO_URL}/realms/${process.env.SSO_REALM}/protocol/openid-connect/auth`,
+        tokenUrl: `${process.env.SSO_URL}/realms/${process.env.SSO_REALM}/protocol/openid-connect/token`,
+        scopes: {
+          openid: "OpenID Connect",
+        },
+      },
+    },
+  })
   .build();
 
 export function setupSwagger(app: INestApplication) {

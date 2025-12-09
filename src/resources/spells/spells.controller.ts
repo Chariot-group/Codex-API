@@ -20,6 +20,7 @@ import {
   getSchemaPath,
   ApiParam,
   ApiCreatedResponse,
+  ApiSecurity,
 } from "@nestjs/swagger";
 import { SpellsService } from "@/resources/spells/spells.service";
 import { Types } from "mongoose";
@@ -49,6 +50,7 @@ import {
   SpellTranslationSummaryDto,
   SpellTranslationsListDto,
 )
+@ApiSecurity("oauth2")
 @Controller("spells")
 export class SpellsController {
   constructor(private readonly spellsService: SpellsService) {}

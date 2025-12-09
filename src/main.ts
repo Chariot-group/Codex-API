@@ -14,10 +14,26 @@ async function bootstrap() {
     }),
   });
 
+  // Enable CORS
+  app.enableCors({
+    origin: true,
+    credentials: true,
+  });
+
   app.useGlobalFilters(new ProblemDetailsFilter());
 
   const document = setupSwagger(app);
-  SwaggerModule.setup("/", app, document);
+  SwaggerModule.setup("/", app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      oauth2RedirectUrl: `${process.env.API_URL_SWAGGER}/oauth2-redirect.html`,
+      initOAuth: {
+        clientId: process.env.SSO_CLIENT_ID,
+        scopes: ["openid", "profile", "email"],
+        usePkceWithAuthorizationCodeGrant: true,
+      },
+    },
+  });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
 

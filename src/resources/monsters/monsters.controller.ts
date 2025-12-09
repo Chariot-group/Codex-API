@@ -15,7 +15,7 @@ import {
   Query,
 } from "@nestjs/common";
 import { MonstersService } from "@/resources/monsters/monsters.service";
-import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, getSchemaPath } from "@nestjs/swagger";
+import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiSecurity, getSchemaPath } from "@nestjs/swagger";
 import { IPaginatedResponse, IResponse } from "@/common/dtos/reponse.dto";
 import { Monster } from "@/resources/monsters/schemas/monster.schema";
 import { MonsterContent } from "@/resources/monsters/schemas/monster-content.schema";
@@ -31,7 +31,8 @@ import { UpdateMonsterTranslationDto } from "@/resources/monsters/dtos/update-mo
 import { DeleteTranslationResponseDto } from "@/resources/monsters/dtos/delete-translation.dto";
 import { MonsterTranslationSummaryDto, LangParamDto } from "@/resources/monsters/dtos/monster-translation.dto";
 
-@ApiExtraModels(Monster, MonsterContent, IResponse, IPaginatedResponse, UpdateMonsterTranslationDto, DeleteTranslationResponseDto, MonsterTranslationSummaryDto)
+@ApiExtraModels(Monster, MonsterContent, IResponse, IPaginatedResponse)
+@ApiSecurity("oauth2")
 @Controller("monsters")
 export class MonstersController {
   constructor(private readonly monstersService: MonstersService) {}
