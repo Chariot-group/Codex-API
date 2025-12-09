@@ -3,6 +3,7 @@
   "paths": {
     "/spells": {
       "get": {
+        "description": "Public endpoint - No authentication required",
         "operationId": "SpellsController_findAll",
         "parameters": [
           {
@@ -87,6 +88,7 @@
             }
           }
         },
+        "security": [],
         "summary": "Get a collection of paginated spells",
         "tags": [
           "Spells"
@@ -138,6 +140,11 @@
             }
           }
         },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
         "summary": "Create a new spell",
         "tags": [
           "Spells"
@@ -146,6 +153,7 @@
     },
     "/spells/{id}": {
       "get": {
+        "description": "Public endpoint - No authentication required",
         "operationId": "SpellsController_findOne",
         "parameters": [
           {
@@ -222,6 +230,7 @@
             }
           }
         },
+        "security": [],
         "summary": "Get a spell by ID",
         "tags": [
           "Spells"
@@ -304,6 +313,11 @@
             }
           }
         },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
         "summary": "Update a spell by ID",
         "tags": [
           "Spells"
@@ -376,6 +390,11 @@
             }
           }
         },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
         "summary": "Delete a spell by ID",
         "tags": [
           "Spells"
@@ -384,6 +403,7 @@
     },
     "/spells/{id}/translations": {
       "get": {
+        "description": "Public endpoint - No authentication required",
         "operationId": "SpellsController_getTranslations",
         "parameters": [
           {
@@ -450,6 +470,7 @@
             }
           }
         },
+        "security": [],
         "summary": "Get all available translations for a spell",
         "tags": [
           "Spells"
@@ -458,6 +479,7 @@
     },
     "/spells/{id}/translations/{lang}": {
       "get": {
+        "description": "Public endpoint - No authentication required",
         "operationId": "SpellsController_getTranslation",
         "parameters": [
           {
@@ -534,6 +556,7 @@
             }
           }
         },
+        "security": [],
         "summary": "Get a specific translation for a spell by language code",
         "tags": [
           "Spells"
@@ -646,6 +669,11 @@
             }
           }
         },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
         "summary": "Add a new translation to an existing spell",
         "tags": [
           "Spells"
@@ -748,6 +776,11 @@
             }
           }
         },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
         "summary": "Update a specific translation of a spell",
         "tags": [
           "Spells"
@@ -829,6 +862,11 @@
             }
           }
         },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
         "summary": "Delete a specific translation for a spell",
         "tags": [
           "Spells"
@@ -837,6 +875,7 @@
     },
     "/monsters": {
       "get": {
+        "description": "Public endpoint - No authentication required",
         "operationId": "MonstersController_findAll",
         "parameters": [
           {
@@ -921,6 +960,7 @@
             }
           }
         },
+        "security": [],
         "summary": "Get a collection of paginated monsters",
         "tags": [
           "Monsters"
@@ -972,6 +1012,11 @@
             }
           }
         },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
         "summary": "Create a new monster",
         "tags": [
           "Monsters"
@@ -980,6 +1025,7 @@
     },
     "/monsters/{id}": {
       "get": {
+        "description": "Public endpoint - No authentication required",
         "operationId": "MonstersController_findOne",
         "parameters": [
           {
@@ -1056,6 +1102,7 @@
             }
           }
         },
+        "security": [],
         "summary": "Get a monster by ID",
         "tags": [
           "Monsters"
@@ -1138,6 +1185,11 @@
             }
           }
         },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
         "summary": "Delete a monster by ID",
         "tags": [
           "Monsters"
@@ -1230,6 +1282,11 @@
             }
           }
         },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
         "summary": "Update a monster by ID",
         "tags": [
           "Monsters"
@@ -1238,6 +1295,7 @@
     },
     "/monsters/{id}/translations": {
       "get": {
+        "description": "Public endpoint - No authentication required",
         "operationId": "MonstersController_getTranslations",
         "parameters": [
           {
@@ -1307,6 +1365,7 @@
             }
           }
         },
+        "security": [],
         "summary": "Get all available translations for a monster",
         "tags": [
           "Monsters"
@@ -1315,6 +1374,7 @@
     },
     "/monsters/{id}/translations/{lang}": {
       "get": {
+        "description": "Public endpoint - No authentication required",
         "operationId": "MonstersController_getTranslation",
         "parameters": [
           {
@@ -1391,6 +1451,7 @@
             }
           }
         },
+        "security": [],
         "summary": "Get a specific translation for a monster by language code",
         "tags": [
           "Monsters"
@@ -1503,6 +1564,11 @@
             }
           }
         },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
         "summary": "Add a new translation to a monster",
         "tags": [
           "Monsters"
@@ -1605,6 +1671,11 @@
             }
           }
         },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
         "summary": "Update a specific translation for a monster",
         "tags": [
           "Monsters"
@@ -1697,6 +1768,11 @@
             }
           }
         },
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
         "summary": "Delete a specific translation of a monster",
         "tags": [
           "Monsters"
@@ -1718,10 +1794,17 @@
   ],
   "components": {
     "securitySchemes": {
-      "bearer": {
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "type": "http"
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://integ.sso.chariot.tools/realms/chariot/protocol/openid-connect/auth",
+            "tokenUrl": "https://integ.sso.chariot.tools/realms/chariot/protocol/openid-connect/token",
+            "scopes": {
+              "openid": "OpenID Connect"
+            }
+          }
+        }
       }
     },
     "schemas": {
@@ -1740,12 +1823,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T10:30:58.203Z"
+            "example": "2025-12-09T13:19:16.289Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T10:30:58.203Z"
+            "example": "2025-12-09T13:19:16.289Z"
           },
           "name": {
             "type": "string",
@@ -1833,6 +1916,10 @@
               "type": "string"
             }
           },
+          "createdBy": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
           "translations": {
             "type": "object",
             "additionalProperties": {
@@ -1913,22 +2000,22 @@
       "DeleteTranslationResponseDto": {
         "type": "object",
         "properties": {
-          "monsterId": {
+          "message": {
             "type": "string",
-            "description": "The ID of the monster",
-            "example": "507f1f77bcf86cd799439011"
+            "example": "Translation 'fr' for spell #507f1f77bcf86cd799439011 deleted in 15ms",
+            "description": "Success message"
           },
-          "deletedLang": {
+          "deletedLanguage": {
             "type": "string",
-            "description": "The language code that was deleted",
-            "example": "fr"
+            "example": "fr",
+            "description": "The language code of the deleted translation"
           },
           "remainingLanguages": {
-            "description": "Remaining languages after deletion",
             "example": [
               "en",
               "es"
             ],
+            "description": "Remaining active languages after deletion",
             "type": "array",
             "items": {
               "type": "string"
@@ -1936,8 +2023,8 @@
           }
         },
         "required": [
-          "monsterId",
-          "deletedLang",
+          "message",
+          "deletedLanguage",
           "remainingLanguages"
         ]
       },
@@ -1962,13 +2049,13 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T10:30:58.321Z",
+            "example": "2025-12-09T13:19:16.422Z",
             "description": "Creation date of this translation"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T10:30:58.321Z",
+            "example": "2025-12-09T13:19:16.422Z",
             "description": "Last update date of this translation"
           }
         },
@@ -2798,12 +2885,12 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T10:30:58.794Z"
+            "example": "2025-12-09T13:19:16.894Z"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T10:30:58.794Z"
+            "example": "2025-12-09T13:19:16.894Z"
           },
           "name": {
             "type": "string",
@@ -2867,6 +2954,10 @@
               "type": "string"
             }
           },
+          "createdBy": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
           "translations": {
             "type": "object",
             "additionalProperties": {
@@ -2885,163 +2976,6 @@
           "translations",
           "deletedAt"
         ]
-      },
-      "StatsTranslationDto": {
-        "type": "object",
-        "properties": {
-          "languages": {
-            "description": "Langues parlées par le monstre traduites",
-            "example": [
-              "Commun",
-              "Draconique"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "AbilityTranslationDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Nom de la capacité traduit",
-            "example": "Vision dans le noir"
-          },
-          "description": {
-            "type": "string",
-            "description": "Description de la capacité traduite",
-            "example": "Le monstre peut voir dans l'obscurité jusqu'à 60 pieds."
-          }
-        },
-        "required": [
-          "name",
-          "description"
-        ]
-      },
-      "ActionTranslationDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Nom de l'action traduit",
-            "example": "Attaque multiattaque"
-          },
-          "description": {
-            "type": "string",
-            "description": "Description de l'action traduite",
-            "example": "Le dragon effectue trois attaques : une morsure et deux griffes."
-          }
-        }
-      },
-      "ActionsTranslationDto": {
-        "type": "object",
-        "properties": {
-          "standard": {
-            "description": "Actions standard traduites",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ActionTranslationDto"
-            }
-          },
-          "legendary": {
-            "description": "Actions légendaires traduites",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ActionTranslationDto"
-            }
-          },
-          "lair": {
-            "description": "Actions d'antre traduites",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ActionTranslationDto"
-            }
-          },
-          "reactions": {
-            "description": "Réactions traduites",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ActionTranslationDto"
-            }
-          },
-          "bonus": {
-            "description": "Actions bonus traduites",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ActionTranslationDto"
-            }
-          }
-        }
-      },
-      "ProfileTranslationDto": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Type du monstre traduit",
-            "example": "Dragon"
-          },
-          "subtype": {
-            "type": "string",
-            "description": "Sous-type du monstre traduit",
-            "example": "Rouge"
-          },
-          "alignment": {
-            "type": "string",
-            "description": "Alignement du monstre traduit",
-            "example": "Chaotique mauvais"
-          }
-        }
-      },
-      "UpdateMonsterTranslationDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "Gobelin",
-            "description": "Name of the monster (translated)"
-          },
-          "stats": {
-            "description": "Translation for stats (only languages can be modified)",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StatsTranslationDto"
-              }
-            ]
-          },
-          "abilities": {
-            "description": "Translated abilities (name and description only)",
-            "example": [
-              {
-                "name": "Ascendance féerique",
-                "description": "La créature a l'avantage aux jets de sauvegarde contre les effets de charme."
-              }
-            ],
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AbilityTranslationDto"
-            }
-          },
-          "actions": {
-            "description": "Translated actions (name and description only, numeric values cannot be changed)",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ActionsTranslationDto"
-              }
-            ]
-          },
-          "profile": {
-            "description": "Translated profile (type, subtype, alignment)",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ProfileTranslationDto"
-              }
-            ]
-          }
-        }
       },
       "MonsterTranslationSummaryDto": {
         "type": "object",
@@ -3070,13 +3004,13 @@
           "createdAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T10:30:58.878Z",
+            "example": "2025-12-09T13:19:16.981Z",
             "description": "Creation date of this translation"
           },
           "updatedAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2025-12-09T10:30:58.878Z",
+            "example": "2025-12-09T13:19:16.981Z",
             "description": "Last update date of this translation"
           }
         },
@@ -3893,6 +3827,116 @@
           "tag"
         ]
       },
+      "StatsTranslationDto": {
+        "type": "object",
+        "properties": {
+          "languages": {
+            "description": "Langues parlées par le monstre traduites",
+            "example": [
+              "Commun",
+              "Draconique"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AbilityTranslationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nom de la capacité traduit",
+            "example": "Vision dans le noir"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description de la capacité traduite",
+            "example": "Le monstre peut voir dans l'obscurité jusqu'à 60 pieds."
+          }
+        },
+        "required": [
+          "name",
+          "description"
+        ]
+      },
+      "ActionTranslationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nom de l'action traduit",
+            "example": "Attaque multiattaque"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description de l'action traduite",
+            "example": "Le dragon effectue trois attaques : une morsure et deux griffes."
+          }
+        }
+      },
+      "ActionsTranslationDto": {
+        "type": "object",
+        "properties": {
+          "standard": {
+            "description": "Actions standard traduites",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionTranslationDto"
+            }
+          },
+          "legendary": {
+            "description": "Actions légendaires traduites",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionTranslationDto"
+            }
+          },
+          "lair": {
+            "description": "Actions d'antre traduites",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionTranslationDto"
+            }
+          },
+          "reactions": {
+            "description": "Réactions traduites",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionTranslationDto"
+            }
+          },
+          "bonus": {
+            "description": "Actions bonus traduites",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionTranslationDto"
+            }
+          }
+        }
+      },
+      "ProfileTranslationDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type du monstre traduit",
+            "example": "Dragon"
+          },
+          "subtype": {
+            "type": "string",
+            "description": "Sous-type du monstre traduit",
+            "example": "Rouge"
+          },
+          "alignment": {
+            "type": "string",
+            "description": "Alignement du monstre traduit",
+            "example": "Chaotique mauvais"
+          }
+        }
+      },
       "CreateMonsterTranslationDto": {
         "type": "object",
         "properties": {
@@ -3936,6 +3980,53 @@
         "required": [
           "name"
         ]
+      },
+      "UpdateMonsterTranslationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Gobelin",
+            "description": "Name of the monster (translated)"
+          },
+          "stats": {
+            "description": "Translation for stats (only languages can be modified)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StatsTranslationDto"
+              }
+            ]
+          },
+          "abilities": {
+            "description": "Translated abilities (name and description only)",
+            "example": [
+              {
+                "name": "Ascendance féerique",
+                "description": "La créature a l'avantage aux jets de sauvegarde contre les effets de charme."
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbilityTranslationDto"
+            }
+          },
+          "actions": {
+            "description": "Translated actions (name and description only, numeric values cannot be changed)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActionsTranslationDto"
+              }
+            ]
+          },
+          "profile": {
+            "description": "Translated profile (type, subtype, alignment)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileTranslationDto"
+              }
+            ]
+          }
+        }
       }
     }
   }
