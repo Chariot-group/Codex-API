@@ -43,6 +43,7 @@ L'API utilise un système d'**authentification SSO (Single Sign-On)** pour sécu
 
 - **Accès public** : Les routes de lecture (GET) sont accessibles sans authentification
 - **Accès protégé** : Les opérations de création, modification et suppression nécessitent une authentification via SSO
+- **OAuth 2.0** : L'authentification SSO est intégrée via Swagger OAuth 2.0, permettant de tester directement les endpoints protégés depuis la documentation interactive
 - **Tokens JWT** : Une fois authentifié via le SSO, l'utilisateur reçoit un token JWT pour accéder aux ressources protégées
 - **Validation automatique** : Les guards NestJS vérifient la validité des tokens sur chaque requête protégée
 
