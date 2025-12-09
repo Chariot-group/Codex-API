@@ -172,3 +172,205 @@ describe("SpellsController - addTranslation (e2e)", () => {
     await request(app.getHttpServer()).post(`/spells/invalid-id/translations/fr`).send(translationDto).expect(400);
   });
 });
+
+describe("MonstersController - addTranslation (e2e)", () => {
+  let app: INestApplication<App>;
+  let createdMonsterId: string;
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe());
+    await app.init();
+
+    // Create a test monster for translation tests (homebrew, tag=0)
+    // Including abilities and actions so we can test translation of those
+    const createMonsterDto = {
+      lang: "en",
+      monsterContent: {
+        name: "Test Monster",
+        stats: {
+          size: 2,
+          maxHitPoints: 50,
+          armorClass: 15,
+          languages: ["Common", "Elvish"],
+        },
+        abilities: [
+          {
+            name: "Darkvision",
+            description: "Can see in darkness up to 60 feet.",
+          },
+        ],
+        actions: {
+          standard: [
+            {
+              name: "Claw Attack",
+              type: "melee",
+              attackBonus: 5,
+              damage: {
+                dice: "1d8+3",
+                type: "slashing",
+              },
+              description: "Melee attack: +5 to hit, reach 5 ft.",
+            },
+          ],
+        },
+        profile: {
+          type: "humanoid",
+          subtype: "elf",
+          alignment: "neutral",
+        },
+        challenge: {
+          challengeRating: 2,
+          experiencePoints: 450,
+        },
+      },
+    };
+
+    const response = await request(app.getHttpServer()).post("/monsters").send(createMonsterDto).expect(201);
+
+    createdMonsterId = response.body.data._id;
+  });
+
+  afterAll(async () => {
+    // Clean up: delete the test monster
+    if (createdMonsterId) {
+      await request(app.getHttpServer()).delete(`/monsters/${createdMonsterId}`);
+    }
+    await app.close();
+  });
+
+  it("POST /monsters/:id/translations/:lang - should add a translation successfully", async () => {
+    // New DTO format: only translatable text fields
+    const translationDto = {
+      name: "Monstre de test",
+      stats: {
+        languages: ["Commun", "Elfique"],
+      },
+      abilities: [
+        {
+          name: "Vision dans le noir",
+          description: "Peut voir dans l'obscurité jusqu'à 18 mètres.",
+        },
+      ],
+      actions: {
+        standard: [
+          {
+            name: "Attaque de griffe",
+            description: "Attaque de mêlée : +5 pour toucher, allonge 1,50 m.",
+          },
+        ],
+      },
+      profile: {
+        type: "humanoïde",
+        subtype: "elfe",
+        alignment: "neutre",
+      },
+    };
+
+    const response = await request(app.getHttpServer())
+      .post(`/monsters/${createdMonsterId}/translations/fr`)
+      .send(translationDto)
+      .expect(201);
+
+    expect(response.body.message).toContain("Translation 'fr' added to monster");
+    expect(response.body.data).toBeDefined();
+    expect(response.body.data.languages).toContain("fr");
+  });
+
+  it("POST /monsters/:id/translations/:lang - should return 409 if translation already exists", async () => {
+    const translationDto = {
+      name: "Test Monster Again",
+    };
+
+    await request(app.getHttpServer())
+      .post(`/monsters/${createdMonsterId}/translations/en`)
+      .send(translationDto)
+      .expect(409);
+  });
+
+  it("POST /monsters/:id/translations/:lang - should return 400 for invalid language code", async () => {
+    const translationDto = {
+      name: "Test Monster",
+    };
+
+    await request(app.getHttpServer())
+      .post(`/monsters/${createdMonsterId}/translations/FRA`)
+      .send(translationDto)
+      .expect(400);
+  });
+
+  it("POST /monsters/:id/translations/:lang - should return 404 for non-existent monster", async () => {
+    const fakeId = new Types.ObjectId().toString();
+    const translationDto = {
+      name: "Test",
+    };
+
+    await request(app.getHttpServer()).post(`/monsters/${fakeId}/translations/es`).send(translationDto).expect(404);
+  });
+
+  it("POST /monsters/:id/translations/:lang - should return 400 for invalid MongoDB ID", async () => {
+    const translationDto = {
+      name: "Test",
+    };
+
+    await request(app.getHttpServer()).post(`/monsters/invalid-id/translations/es`).send(translationDto).expect(400);
+  });
+
+  it("POST /monsters/:id/translations/:lang - should return 400 for missing required field (name)", async () => {
+    const translationDto = {
+      // name is missing
+      stats: {
+        languages: ["German"],
+      },
+    };
+
+    await request(app.getHttpServer())
+      .post(`/monsters/${createdMonsterId}/translations/pt`)
+      .send(translationDto)
+      .expect(400);
+  });
+
+  it("POST /monsters/:id/translations/:lang - should add translation with abilities", async () => {
+    const translationDto = {
+      name: "Testmonster",
+      abilities: [
+        {
+          name: "Dunkelsicht",
+          description: "Das Monster kann im Dunkeln sehen.",
+        },
+      ],
+    };
+
+    const response = await request(app.getHttpServer())
+      .post(`/monsters/${createdMonsterId}/translations/de`)
+      .send(translationDto)
+      .expect(201);
+
+    expect(response.body.data.languages).toContain("de");
+  });
+
+  it("POST /monsters/:id/translations/:lang - should add translation with actions", async () => {
+    const translationDto = {
+      name: "Mostro di prova",
+      actions: {
+        standard: [
+          {
+            name: "Attacco con artiglio",
+            description: "Attacco in mischia: +5 al tiro per colpire, portata 1,5 metri.",
+          },
+        ],
+      },
+    };
+
+    const response = await request(app.getHttpServer())
+      .post(`/monsters/${createdMonsterId}/translations/it`)
+      .send(translationDto)
+      .expect(201);
+
+    expect(response.body.data.languages).toContain("it");
+  });
+});

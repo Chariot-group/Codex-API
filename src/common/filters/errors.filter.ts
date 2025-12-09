@@ -1,12 +1,6 @@
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
-import { Request, Response } from 'express';
-import { ProblemDetailsDto } from '@/common/dtos/errors.dto';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from "@nestjs/common";
+import { Request, Response } from "express";
+import { ProblemDetailsDto } from "@/common/dtos/errors.dto";
 
 @Catch()
 export class ProblemDetailsFilter implements ExceptionFilter {
@@ -16,9 +10,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     const req = ctx.getRequest<Request>();
 
     const isHttpException = exception instanceof HttpException;
-    const status = isHttpException
-      ? exception.getStatus()
-      : HttpStatus.INTERNAL_SERVER_ERROR;
+    const status = isHttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const base: ProblemDetailsDto = {
       type: `https://httpstatuses.io/${status}`,
@@ -27,7 +19,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       instance: req.url,
     };
 
-    let body: ProblemDetailsDto = { ...base };
+    const body: ProblemDetailsDto = { ...base };
 
     // class-validator (ValidationPipe)
     if (isHttpException) {
@@ -35,7 +27,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
 
       body.title = (response as any)?.error || body.title;
 
-      if (typeof response === 'object' && Array.isArray((response as any).message)) {
+      if (typeof response === "object" && Array.isArray((response as any).message)) {
         const messages: string[] = (response as any).message;
 
         body.detail = "Validation failed";
@@ -53,12 +45,12 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       }
 
       // HttpException standard
-      if (typeof response === 'string') {
+      if (typeof response === "string") {
         body.detail = response;
-      } else if (typeof response === 'object') {
+      } else if (typeof response === "object") {
         const { message, error } = response as any;
 
-        if (typeof message === 'string') {
+        if (typeof message === "string") {
           body.detail = message;
         } else if (Array.isArray(message)) {
           body.detail = "Validation failed";

@@ -72,7 +72,7 @@ export class ConverterService {
       effectType = 2;
     }
 
-    let spellcontent: SpellContent = new SpellContent();
+    const spellcontent: SpellContent = new SpellContent();
 
     spellcontent.name = entry.name;
     spellcontent.level = entry.level;
@@ -92,10 +92,10 @@ export class ConverterService {
   }
 
   private mapSpell(entry: SpellContent): Spell {
-    let translations: Map<string, SpellContent> = new Map();
+    const translations: Map<string, SpellContent> = new Map();
     translations.set("en", entry);
 
-    let spell: Spell = new Spell();
+    const spell: Spell = new Spell();
 
     spell.tag = 1;
     spell.languages = ["en"];
@@ -120,10 +120,10 @@ export class ConverterService {
   }
 
   private mapMonster(entry: MonsterContent): Monster {
-    let translations: Map<string, MonsterContent> = new Map();
+    const translations: Map<string, MonsterContent> = new Map();
     translations.set("en", entry);
 
-    let monster: Monster = new Monster();
+    const monster: Monster = new Monster();
 
     monster.tag = 1;
     monster.languages = ["en"];
@@ -161,12 +161,12 @@ export class ConverterService {
     // Mapping des actions
     monstercontent.actions = this.mapActions(entry);
 
-    let tempChallenge = new Challenge();
+    const tempChallenge = new Challenge();
     tempChallenge.challengeRating = entry.challenge_rating ?? 0;
     tempChallenge.experiencePoints = entry.xp ?? 0;
     monstercontent.challenge = tempChallenge;
 
-    let tempProfile = new Profile();
+    const tempProfile = new Profile();
     tempProfile.type = entry.type ? entry.type.charAt(0).toUpperCase() + entry.type.slice(1).toLowerCase() : "Unknown";
     tempProfile.alignment = entry.alignment
       ? entry.alignment.charAt(0).toUpperCase() + entry.alignment.slice(1).toLowerCase()
@@ -271,7 +271,7 @@ export class ConverterService {
   }
 
   private convertStats(entry: any): Stats {
-    let stats = new Stats();
+    const stats = new Stats();
 
     switch (entry.size) {
       case "Tiny":

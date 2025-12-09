@@ -3,7 +3,6 @@ import { ApiProperty } from "@nestjs/swagger";
 
 @Schema()
 export class SpellContent {
-
   @ApiProperty({ example: true })
   @Prop({ required: true, default: true })
   srd: boolean;
@@ -63,7 +62,6 @@ export class SpellContent {
   @ApiProperty({ example: null })
   @Prop({ required: false })
   healing?: string;
-
 }
 
 export const SpellContentSchema = SchemaFactory.createForClass(SpellContent);
