@@ -26,7 +26,7 @@ async function bootstrap() {
   SwaggerModule.setup("/", app, document, {
     swaggerOptions: {
       persistAuthorization: true,
-      oauth2RedirectUrl: `${process.env.API_URL_SWAGGER}/oauth2-redirect.html`,
+      oauth2RedirectUrl: `${process.env.API_URL}/oauth2-redirect.html`,
       initOAuth: {
         clientId: process.env.SSO_CLIENT_ID,
         scopes: ["openid", "profile", "email"],
