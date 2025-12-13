@@ -19,7 +19,7 @@ services:
       timeout: 5s
       retries: 5
   backend:
-    image: ghcr.io/Chariot-group/Codex-API:latest
+    image: ghcr.io/chariot-group/codex-api:latest
     container_name: backend
     working_dir: /app
     ports:
