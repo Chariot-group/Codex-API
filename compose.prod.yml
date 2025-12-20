@@ -3,7 +3,7 @@ services:
     image: mongo:8.2.2
     container_name: mongodb
     ports:
-      - "${MONGO_PORT}:27017"
+      - "27017"
     volumes:
       - mongodb_data:/data/db
     environment:
@@ -27,11 +27,14 @@ services:
     restart: unless-stopped
     working_dir: /app
     environment:
-      - API_PORT=${API_PORT}
+      - API_PORT=${API_PORT}  # Port interne fixe
       - MONGO_URL=${MONGO_URL}
       - NODE_ENV=${NODE_ENV}
       - API_VERSION=${API_VERSION}
       - API_URL=${API_URL}
+      - SSO_URL=${SSO_URL}
+      - SSO_REALM=${SSO_REALM}
+      - SSO_CLIENT_ID=${SSO_CLIENT_ID}
     depends_on:
       mongo:
         condition: service_healthy
@@ -41,6 +44,7 @@ services:
       - "traefik.http.routers.codex-api.entrypoints=websecure"
       - "traefik.http.routers.codex-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.codex-api.loadbalancer.server.port=9000"
+      - "traefik.docker.network=traefik-public"
     networks:
       - traefik-public
       - internal
