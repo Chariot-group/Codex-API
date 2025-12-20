@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { readFile } from "fs/promises";
+import { join } from "path";
 import { Spell } from "@/resources/spells/schemas/spell.schema";
 import { SpellContent } from "@/resources/spells/schemas/spell-content.schema";
 import { Monster } from "@/resources/monsters/schemas/monster.schema";
@@ -29,7 +30,11 @@ export class ConverterService {
   ) {}
 
   async launch(resource: string): Promise<void> {
-    const inputPath = `./src/script/output/${resource}.json`;
+    // Chemin qui fonctionne en dev (./src) et en prod (./dist/src)
+    const basePath = process.env.NODE_ENV === 'production' 
+      ? join(process.cwd(), 'dist', 'src', 'script', 'output')
+      : join(process.cwd(), 'src', 'script', 'output');
+    const inputPath = join(basePath, `${resource}.json`);
 
     Logger.log(`Lecture depuis ${inputPath}...`, this.SERVICE_NAME);
     const file = await readFile(inputPath, "utf-8");
@@ -72,7 +77,7 @@ export class ConverterService {
       effectType = 2;
     }
 
-    const spellcontent: SpellContent = new SpellContent();
+    let spellcontent: SpellContent = new SpellContent();
 
     spellcontent.name = entry.name;
     spellcontent.level = entry.level;
@@ -92,10 +97,10 @@ export class ConverterService {
   }
 
   private mapSpell(entry: SpellContent): Spell {
-    const translations: Map<string, SpellContent> = new Map();
+    let translations: Map<string, SpellContent> = new Map();
     translations.set("en", entry);
 
-    const spell: Spell = new Spell();
+    let spell: Spell = new Spell();
 
     spell.tag = 1;
     spell.languages = ["en"];
@@ -120,10 +125,10 @@ export class ConverterService {
   }
 
   private mapMonster(entry: MonsterContent): Monster {
-    const translations: Map<string, MonsterContent> = new Map();
+    let translations: Map<string, MonsterContent> = new Map();
     translations.set("en", entry);
 
-    const monster: Monster = new Monster();
+    let monster: Monster = new Monster();
 
     monster.tag = 1;
     monster.languages = ["en"];
@@ -161,12 +166,12 @@ export class ConverterService {
     // Mapping des actions
     monstercontent.actions = this.mapActions(entry);
 
-    const tempChallenge = new Challenge();
+    let tempChallenge = new Challenge();
     tempChallenge.challengeRating = entry.challenge_rating ?? 0;
     tempChallenge.experiencePoints = entry.xp ?? 0;
     monstercontent.challenge = tempChallenge;
 
-    const tempProfile = new Profile();
+    let tempProfile = new Profile();
     tempProfile.type = entry.type ? entry.type.charAt(0).toUpperCase() + entry.type.slice(1).toLowerCase() : "Unknown";
     tempProfile.alignment = entry.alignment
       ? entry.alignment.charAt(0).toUpperCase() + entry.alignment.slice(1).toLowerCase()
@@ -271,7 +276,7 @@ export class ConverterService {
   }
 
   private convertStats(entry: any): Stats {
-    const stats = new Stats();
+    let stats = new Stats();
 
     switch (entry.size) {
       case "Tiny":
