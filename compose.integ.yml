@@ -1,7 +1,7 @@
 services:
   mongo:
     image: mongo:8.2.2
-    container_name: mongodb
+    container_name: mongodb-integ
     ports:
       - "27017"
     volumes:
@@ -23,7 +23,7 @@ services:
 
   backend:
     image: ghcr.io/chariot-group/codex-api-integration:latest
-    container_name: backend
+    container_name: backend-integ
     restart: unless-stopped
     working_dir: /app
     environment:

@@ -1,7 +1,7 @@
 services:
   mongo:
     image: mongo:8.2.2
-    container_name: mongodb
+    container_name: mongodb-prod
     ports:
       - "27017"
     volumes:
@@ -20,7 +20,7 @@ services:
 
   backend:
     image: ghcr.io/chariot-group/codex-api-production:latest
-    container_name: backend
+    container_name: backend-prod
     restart: unless-stopped
     working_dir: /app
     environment:
