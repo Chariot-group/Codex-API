@@ -23,8 +23,8 @@
     "dyson:monsters": "ts-node -r tsconfig-paths/register src/script/runner.ts --resource=monsters --mode=dyson",
     "converter:spells": "ts-node -r tsconfig-paths/register src/script/runner.ts --resource=spells --mode=converter",
     "converter:monsters": "ts-node -r tsconfig-paths/register src/script/runner.ts --resource=monsters --mode=converter",
-    "converter:spells:prod": "node dist/script/runner.js -r tsconfig-paths/register src/script/runner.ts --resource=spells --mode=converter",
-    "converter:monsters:prod": "node dist/script/runner.js -r tsconfig-paths/register src/script/runner.ts --resource=monsters --mode=converter"
+    "converter:spells:prod": "node dist/src/script/runner.js -r tsconfig-paths/register src/script/runner.ts --resource=spells --mode=converter",
+    "converter:monsters:prod": "node dist/src/script/runner.js -r tsconfig-paths/register src/script/runner.ts --resource=monsters --mode=converter"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
