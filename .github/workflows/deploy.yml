@@ -1,0 +1,61 @@
+name: Build and Publish Docker image (GHCR)
+
+on:
+  push:
+    branches:
+      - integ
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/codex-api-integration
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set IMAGE_NAME based on branch
+        run: |
+          OWNER="${GITHUB_REPOSITORY%/*}"
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            echo "IMAGE_NAME=ghcr.io/${OWNER}/codex-api-production" >> $GITHUB_ENV
+          else
+            echo "IMAGE_NAME=ghcr.io/${OWNER}/codex-api-integration" >> $GITHUB_ENV
+          fi
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.prod
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          platforms: linux/amd64
+          build-args: |
+            NODE_ENV=production
+
+      - name: Output image tags
+        run: |
+          echo "Pushed: $IMAGE_NAME:latest"
+          echo "Pushed: $IMAGE_NAME:${GITHUB_SHA}"
